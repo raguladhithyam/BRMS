@@ -17,7 +17,11 @@ const schema = z.object({
   phone: z.string().min(10, 'Phone number must be at least 10 digits'),
   bloodGroup: z.string().min(1, 'Blood group is required'),
   units: z.number().min(1, 'At least 1 unit is required').max(10, 'Maximum 10 units allowed'),
-  dateTime: z.string().min(1, 'Date and time is required'),
+  dateTime: z.string().min(1, 'Date and time is required').refine((val) => {
+    const date = new Date(val);
+    const now = new Date();
+    return date > now;
+  }, 'Date and time must be in the future'),
   hospitalName: z.string().min(2, 'Hospital name is required'),
   location: z.string().min(5, 'Location must be at least 5 characters'),
   urgency: z.enum(['low', 'medium', 'high', 'critical']),
@@ -58,7 +62,25 @@ export const BloodRequestForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      await createRequest(data, {
+      console.log('Submitting form data:', data);
+      
+      // Format the data to match backend expectations
+      const requestData = {
+        requestorName: data.requestorName.trim(),
+        email: data.email.trim().toLowerCase(),
+        phone: data.phone.trim(),
+        bloodGroup: data.bloodGroup,
+        units: Number(data.units),
+        dateTime: data.dateTime, // Keep as ISO string
+        hospitalName: data.hospitalName.trim(),
+        location: data.location.trim(),
+        urgency: data.urgency,
+        notes: data.notes?.trim() || undefined,
+      };
+
+      console.log('Formatted request data:', requestData);
+
+      await createRequest(requestData, {
         onSuccess: () => {
           console.log('Request created successfully');
           // Reset form to prevent resubmission
@@ -112,6 +134,13 @@ export const BloodRequestForm: React.FC = () => {
   };
 
   const isFormDisabled = isSubmitting || isCreating || isSubmitSuccessful;
+
+  // Get minimum datetime (current time + 1 hour)
+  const getMinDateTime = () => {
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+    return now.toISOString().slice(0, 16);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -257,7 +286,7 @@ export const BloodRequestForm: React.FC = () => {
                 type="datetime-local"
                 {...register('dateTime')}
                 error={errors.dateTime?.message}
-                min={new Date().toISOString().slice(0, 16)}
+                min={getMinDateTime()}
                 disabled={isFormDisabled}
                 required
               />
@@ -293,6 +322,9 @@ export const BloodRequestForm: React.FC = () => {
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Any additional information that might help donors (e.g., medical condition, specific requirements, etc.)"
               />
+              {errors.notes && (
+                <p className="mt-1 text-sm text-red-600">{errors.notes.message}</p>
+              )}
             </div>
 
             {/* Important Notice */}

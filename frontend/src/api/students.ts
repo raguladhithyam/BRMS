@@ -2,6 +2,13 @@ import api from '../utils/api';
 import { User, PaginatedResponse } from '../types';
 
 export const studentsApi = {
+  // Student-specific endpoints (for students to manage their own data)
+  updateAvailability: async (availability: boolean): Promise<User> => {
+    const response = await api.put('/students/availability', { availability });
+    return response.data.data;
+  },
+
+  // Admin-only endpoints (only for admin users)
   getAll: async (params?: {
     page?: number;
     limit?: number;
@@ -37,11 +44,6 @@ export const studentsApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/admin/students/${id}`);
-  },
-
-  updateAvailability: async (availability: boolean): Promise<User> => {
-    const response = await api.put('/students/availability', { availability });
-    return response.data.data;
   },
 
   bulkUpload: async (file: File): Promise<{ created: number; errors: any[] }> => {

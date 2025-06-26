@@ -6,6 +6,7 @@ export const validate = (schema: Joi.ObjectSchema) => {
     const { error } = schema.validate(req.body);
     
     if (error) {
+      console.log('Validation error:', error.details);
       res.status(400).json({
         success: false,
         message: 'Validation error',
@@ -48,7 +49,7 @@ export const schemas = {
     hospitalName: Joi.string().min(2).max(200).required(),
     location: Joi.string().min(5).max(500).required(),
     urgency: Joi.string().valid('low', 'medium', 'high', 'critical').default('medium'),
-    notes: Joi.string().max(1000).optional(),
+    notes: Joi.string().max(1000).optional().allow(''),
   }),
 
   createStudent: Joi.object({

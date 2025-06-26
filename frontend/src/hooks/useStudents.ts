@@ -3,6 +3,7 @@ import { studentsApi } from '../api/students';
 import { QUERY_KEYS } from '../config/constants';
 import toast from 'react-hot-toast';
 
+// Hook for admin operations (full CRUD)
 export const useStudents = (params?: any) => {
   const queryClient = useQueryClient();
 
@@ -66,6 +67,26 @@ export const useStudents = (params?: any) => {
     },
   });
 
+  return {
+    students,
+    isLoading,
+    error,
+    refetch,
+    createStudent: createMutation.mutate,
+    updateStudent: updateMutation.mutate,
+    deleteStudent: deleteMutation.mutate,
+    bulkUpload: bulkUploadMutation.mutate,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+    isBulkUploading: bulkUploadMutation.isPending,
+  };
+};
+
+// Hook for student-specific operations (availability only)
+export const useStudentProfile = () => {
+  const queryClient = useQueryClient();
+
   const updateAvailabilityMutation = useMutation({
     mutationFn: studentsApi.updateAvailability,
     onSuccess: (data) => {
@@ -80,19 +101,7 @@ export const useStudents = (params?: any) => {
   });
 
   return {
-    students,
-    isLoading,
-    error,
-    refetch,
-    createStudent: createMutation.mutate,
-    updateStudent: updateMutation.mutate,
-    deleteStudent: deleteMutation.mutate,
-    bulkUpload: bulkUploadMutation.mutate,
     updateAvailability: updateAvailabilityMutation.mutate,
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
-    isBulkUploading: bulkUploadMutation.isPending,
     isUpdatingAvailability: updateAvailabilityMutation.isPending,
   };
 };

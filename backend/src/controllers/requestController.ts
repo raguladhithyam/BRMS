@@ -11,50 +11,146 @@ interface AuthRequest extends Request {
 
 export const createBloodRequest = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('Received blood request data:', req.body);
+    
     const requestData = req.body;
 
+    // Validate required fields
+    const requiredFields = ['requestorName', 'email', 'phone', 'bloodGroup', 'units', 'dateTime', 'hospitalName', 'location', 'urgency'];
+    const missingFields = requiredFields.filter(field => !requestData[field]);
+    
+    if (missingFields.length > 0) {
+      console.log('Missing required fields:', missingFields);
+      res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
+        errors: missingFields.map(field => ({
+          field,
+          message: `${field} is required`
+        }))
+      });
+      return;
+    }
+
+    // Validate date is in the future
+    const requestDate = new Date(requestData.dateTime);
+    const now = new Date();
+    
+    if (requestDate <= now) {
+      console.log('Invalid date:', requestData.dateTime, 'Current time:', now.toISOString());
+      res.status(400).json({
+        success: false,
+        message: 'Date and time must be in the future',
+        errors: [{
+          field: 'dateTime',
+          message: 'Date and time must be in the future'
+        }]
+      });
+      return;
+    }
+
+    // Validate blood group
+    const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    if (!validBloodGroups.includes(requestData.bloodGroup)) {
+      console.log('Invalid blood group:', requestData.bloodGroup);
+      res.status(400).json({
+        success: false,
+        message: 'Invalid blood group',
+        errors: [{
+          field: 'bloodGroup',
+          message: 'Invalid blood group'
+        }]
+      });
+      return;
+    }
+
+    // Validate urgency
+    const validUrgencies = ['low', 'medium', 'high', 'critical'];
+    if (!validUrgencies.includes(requestData.urgency)) {
+      console.log('Invalid urgency:', requestData.urgency);
+      res.status(400).json({
+        success: false,
+        message: 'Invalid urgency level',
+        errors: [{
+          field: 'urgency',
+          message: 'Invalid urgency level'
+        }]
+      });
+      return;
+    }
+
+    // Validate units
+    const units = parseInt(requestData.units);
+    if (isNaN(units) || units < 1 || units > 10) {
+      console.log('Invalid units:', requestData.units);
+      res.status(400).json({
+        success: false,
+        message: 'Units must be between 1 and 10',
+        errors: [{
+          field: 'units',
+          message: 'Units must be between 1 and 10'
+        }]
+      });
+      return;
+    }
+
     // Create blood request
-    const bloodRequest = await BloodRequest.create(requestData);
+    const bloodRequest = await BloodRequest.create({
+      ...requestData,
+      units: units,
+      dateTime: requestDate,
+    });
+
+    console.log('Blood request created successfully:', bloodRequest.id);
 
     // Get Socket.IO instance
     const io = req.app.get('io');
 
     // Notify all admins
-    emitToAdmins(io, 'request_created', {
-      message: `New blood request: ${bloodRequest.bloodGroup} needed`,
-      bloodGroup: bloodRequest.bloodGroup,
-      urgency: bloodRequest.urgency,
-      requestId: bloodRequest.id,
-    });
-
-    // Create notifications for all admins
-    const admins = await User.findAll({ where: { role: 'admin' } });
-    for (const admin of admins) {
-      await createNotification({
-        userId: admin.id,
-        type: 'request_created',
-        title: 'New Blood Request',
-        message: `${bloodRequest.requestorName} needs ${bloodRequest.bloodGroup} blood (${bloodRequest.units} units)`,
-        metadata: { requestId: bloodRequest.id },
+    if (io) {
+      emitToAdmins(io, 'request_created', {
+        message: `New blood request: ${bloodRequest.bloodGroup} needed`,
+        bloodGroup: bloodRequest.bloodGroup,
+        urgency: bloodRequest.urgency,
+        requestId: bloodRequest.id,
       });
     }
 
-    // Send email to admins
-    const adminEmails = admins.map(admin => admin.email);
-    await sendEmail({
-      to: adminEmails,
-      subject: `New Blood Request - ${bloodRequest.bloodGroup} Needed`,
-      template: 'newBloodRequest',
-      data: {
-        requestorName: bloodRequest.requestorName,
-        bloodGroup: bloodRequest.bloodGroup,
-        units: bloodRequest.units,
-        urgency: bloodRequest.urgency,
-        hospitalName: bloodRequest.hospitalName,
-        location: bloodRequest.location,
-        dateTime: bloodRequest.dateTime,
-      },
-    });
+    // Create notifications for all admins
+    try {
+      const admins = await User.findAll({ where: { role: 'admin' } });
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          type: 'request_created',
+          title: 'New Blood Request',
+          message: `${bloodRequest.requestorName} needs ${bloodRequest.bloodGroup} blood (${bloodRequest.units} units)`,
+          metadata: { requestId: bloodRequest.id },
+        });
+      }
+
+      // Send email to admins
+      const adminEmails = admins.map(admin => admin.email);
+      if (adminEmails.length > 0) {
+        await sendEmail({
+          to: adminEmails,
+          subject: `New Blood Request - ${bloodRequest.bloodGroup} Needed`,
+          template: 'newBloodRequest',
+          data: {
+            requestorName: bloodRequest.requestorName,
+            bloodGroup: bloodRequest.bloodGroup,
+            units: bloodRequest.units,
+            urgency: bloodRequest.urgency,
+            hospitalName: bloodRequest.hospitalName,
+            location: bloodRequest.location,
+            dateTime: bloodRequest.dateTime,
+          },
+        });
+      }
+    } catch (notificationError) {
+      console.error('Error sending notifications:', notificationError);
+      // Don't fail the request if notifications fail
+    }
 
     res.status(201).json({
       success: true,
@@ -66,6 +162,7 @@ export const createBloodRequest = async (req: Request, res: Response): Promise<v
     res.status(500).json({
       success: false,
       message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
@@ -190,23 +287,30 @@ export const optInToRequest = async (req: AuthRequest, res: Response): Promise<v
     const io = req.app.get('io');
 
     // Notify admins
-    emitToAdmins(io, 'student_opted_in', {
-      message: `${req.user.name} opted in for ${bloodRequest.bloodGroup} request`,
-      studentName: req.user.name,
-      bloodGroup: bloodRequest.bloodGroup,
-      requestId,
-    });
+    if (io) {
+      emitToAdmins(io, 'student_opted_in', {
+        message: `${req.user.name} opted in for ${bloodRequest.bloodGroup} request`,
+        studentName: req.user.name,
+        bloodGroup: bloodRequest.bloodGroup,
+        requestId,
+      });
+    }
 
     // Create notifications for admins
-    const admins = await User.findAll({ where: { role: 'admin' } });
-    for (const admin of admins) {
-      await createNotification({
-        userId: admin.id,
-        type: 'student_opted_in',
-        title: 'Student Opted In',
-        message: `${req.user.name} opted in for ${bloodRequest.requestorName}'s ${bloodRequest.bloodGroup} request`,
-        metadata: { requestId, studentId: req.user.id },
-      });
+    try {
+      const admins = await User.findAll({ where: { role: 'admin' } });
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin.id,
+          type: 'student_opted_in',
+          title: 'Student Opted In',
+          message: `${req.user.name} opted in for ${bloodRequest.requestorName}'s ${bloodRequest.bloodGroup} request`,
+          metadata: { requestId, studentId: req.user.id },
+        });
+      }
+    } catch (notificationError) {
+      console.error('Error sending notifications:', notificationError);
+      // Don't fail the request if notifications fail
     }
 
     res.json({

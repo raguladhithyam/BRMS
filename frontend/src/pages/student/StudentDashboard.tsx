@@ -7,13 +7,11 @@ import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import { useStudentRequests } from '../../hooks/useRequests';
-import { useStudents } from '../../hooks/useStudents';
 import { format } from 'date-fns';
 
 export const StudentDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { matchingRequests, optIns, isLoading, optIn, isOptingIn } = useStudentRequests();
-  const { updateAvailability, isUpdatingAvailability } = useStudents();
 
   const handleOptIn = (requestId: string) => {
     optIn(requestId);
@@ -21,7 +19,8 @@ export const StudentDashboard: React.FC = () => {
 
   const handleToggleAvailability = () => {
     if (user?.availability !== undefined) {
-      updateAvailability(!user.availability);
+      // Update availability through the profile update
+      updateProfile({ ...user, availability: !user.availability });
     }
   };
 
@@ -77,7 +76,6 @@ export const StudentDashboard: React.FC = () => {
           
           <Button
             onClick={handleToggleAvailability}
-            loading={isUpdatingAvailability}
             variant={user?.availability ? 'outline' : 'primary'}
           >
             {user?.availability ? 'Mark Unavailable' : 'Mark Available'}

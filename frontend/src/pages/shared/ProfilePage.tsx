@@ -9,7 +9,7 @@ import { Input } from '../../components/shared/Input';
 import Select from '../../components/shared/Select';
 import { Badge } from '../../components/shared/Badge';
 import { useAuth } from '../../hooks/useAuth';
-import { useStudents } from '../../hooks/useStudents';
+import { useStudentProfile } from '../../hooks/useStudents';
 import { BLOOD_GROUPS } from '../../config/constants';
 import { format } from 'date-fns';
 
@@ -25,7 +25,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export const ProfilePage: React.FC = () => {
   const { user, updateProfile, isUpdateLoading } = useAuth();
-  const { updateAvailability, isUpdatingAvailability } = useStudents();
+  const { updateAvailability, isUpdatingAvailability } = useStudentProfile();
 
   const {
     register,
