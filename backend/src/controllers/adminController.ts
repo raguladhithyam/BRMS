@@ -270,12 +270,25 @@ export const rejectRequest = async (req: Request, res: Response): Promise<void> 
 
 export const fulfillRequest = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('Fulfill request called with:', { params: req.params, body: req.body });
+    
     const { id } = req.params;
     const { donorId } = req.body;
 
-    const bloodRequest = await BloodRequest.findByPk(id);
+    // Validate input
+    if (!donorId) {
+      console.log('No donorId provided');
+      res.status(400).json({
+        success: false,
+        message: 'Donor ID is required',
+      });
+      return;
+    }
 
+    // Find the blood request
+    const bloodRequest = await BloodRequest.findByPk(id);
     if (!bloodRequest) {
+      console.log('Blood request not found:', id);
       res.status(404).json({
         success: false,
         message: 'Blood request not found',
@@ -283,7 +296,15 @@ export const fulfillRequest = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    console.log('Found blood request:', {
+      id: bloodRequest.id,
+      status: bloodRequest.status,
+      requestorName: bloodRequest.requestorName
+    });
+
+    // Check if request is in approved status
     if (bloodRequest.status !== 'approved') {
+      console.log('Request is not in approved status:', bloodRequest.status);
       res.status(400).json({
         success: false,
         message: 'Request is not in approved status',
@@ -291,9 +312,10 @@ export const fulfillRequest = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Verify donor exists and has opted in
+    // Find the donor
     const donor = await User.findByPk(donorId);
     if (!donor) {
+      console.log('Donor not found:', donorId);
       res.status(404).json({
         success: false,
         message: 'Donor not found',
@@ -301,6 +323,14 @@ export const fulfillRequest = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    console.log('Found donor:', {
+      id: donor.id,
+      name: donor.name,
+      email: donor.email,
+      bloodGroup: donor.bloodGroup
+    });
+
+    // Check if donor has opted in to this request
     const optIn = await StudentOptIn.findOne({
       where: {
         studentId: donorId,
@@ -309,6 +339,7 @@ export const fulfillRequest = async (req: Request, res: Response): Promise<void>
     });
 
     if (!optIn) {
+      console.log('Donor has not opted in to this request');
       res.status(400).json({
         success: false,
         message: 'Donor has not opted in to this request',
@@ -316,21 +347,28 @@ export const fulfillRequest = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    console.log('Found opt-in record:', optIn.id);
+
     // Update request status and assign donor
     await bloodRequest.update({
       status: 'fulfilled',
       assignedDonorId: donorId,
     });
 
+    console.log('Updated blood request status to fulfilled');
+
     // Get Socket.IO instance
     const io = req.app.get('io');
 
     // Notify the assigned donor
-    emitToUser(io, donorId, 'donor_assigned', {
-      message: 'You have been selected as a donor',
-      requestId: id,
-    });
+    if (io) {
+      emitToUser(io, donorId, 'donor_assigned', {
+        message: 'You have been selected as a donor',
+        requestId: id,
+      });
+    }
 
+    // Create notification for the donor
     await createNotification({
       userId: donorId,
       type: 'donor_assigned',
@@ -339,39 +377,71 @@ export const fulfillRequest = async (req: Request, res: Response): Promise<void>
       metadata: { requestId: id },
     });
 
-    // Send emails
-    await sendEmail({
-      to: [bloodRequest.email],
-      subject: 'Donor Found for Your Blood Request',
-      template: 'donorAssigned',
-      data: {
-        requestorName: bloodRequest.requestorName,
-        donorName: donor.name,
-        donorEmail: donor.email,
-        donorPhone: donor.phone,
-        bloodGroup: bloodRequest.bloodGroup,
-      },
+    console.log('Created notification for donor');
+
+    // Send email to requestor with donor details
+    try {
+      await sendEmail({
+        to: [bloodRequest.email],
+        subject: 'Donor Found for Your Blood Request',
+        template: 'donorAssigned',
+        data: {
+          requestorName: bloodRequest.requestorName,
+          donorName: donor.name,
+          donorEmail: donor.email,
+          donorPhone: donor.phone,
+          bloodGroup: bloodRequest.bloodGroup,
+          units: bloodRequest.units,
+          hospitalName: bloodRequest.hospitalName,
+          location: bloodRequest.location,
+          dateTime: bloodRequest.dateTime,
+        },
+      });
+      console.log('Sent email to requestor');
+    } catch (emailError) {
+      console.error('Failed to send email to requestor:', emailError);
+    }
+
+    // Send email to donor with request details
+    try {
+      await sendEmail({
+        to: [donor.email],
+        subject: 'You Have Been Selected as a Blood Donor',
+        template: 'donorSelected',
+        data: {
+          donorName: donor.name,
+          requestorName: bloodRequest.requestorName,
+          requestorEmail: bloodRequest.email,
+          requestorPhone: bloodRequest.phone,
+          bloodGroup: bloodRequest.bloodGroup,
+          units: bloodRequest.units,
+          hospitalName: bloodRequest.hospitalName,
+          location: bloodRequest.location,
+          dateTime: bloodRequest.dateTime,
+          urgency: bloodRequest.urgency,
+        },
+      });
+      console.log('Sent email to donor');
+    } catch (emailError) {
+      console.error('Failed to send email to donor:', emailError);
+    }
+
+    // Fetch updated request with donor details for response
+    const updatedRequest = await BloodRequest.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'assignedDonor',
+          attributes: ['id', 'name', 'email', 'phone'],
+        },
+      ],
     });
 
-    await sendEmail({
-      to: [donor.email],
-      subject: 'You Have Been Selected as a Blood Donor',
-      template: 'donorSelected',
-      data: {
-        donorName: donor.name,
-        requestorName: bloodRequest.requestorName,
-        requestorEmail: bloodRequest.email,
-        requestorPhone: bloodRequest.phone,
-        bloodGroup: bloodRequest.bloodGroup,
-        hospitalName: bloodRequest.hospitalName,
-        location: bloodRequest.location,
-        dateTime: bloodRequest.dateTime,
-      },
-    });
+    console.log('Successfully fulfilled request');
 
     res.json({
       success: true,
-      data: bloodRequest,
+      data: updatedRequest,
       message: 'Donor assigned successfully',
     });
   } catch (error) {
@@ -379,6 +449,7 @@ export const fulfillRequest = async (req: Request, res: Response): Promise<void>
     res.status(500).json({
       success: false,
       message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };

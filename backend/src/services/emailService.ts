@@ -60,35 +60,114 @@ const templates = {
   `,
 
   donorAssigned: (data: any) => `
-    <h2>Donor Found!</h2>
-    <p>Dear ${data.requestorName},</p>
-    <p>Great news! We have found a donor for your ${data.bloodGroup} blood request.</p>
-    <p><strong>Donor Contact Information:</strong></p>
-    <ul>
-      <li><strong>Name:</strong> ${data.donorName}</li>
-      <li><strong>Email:</strong> ${data.donorEmail}</li>
-      <li><strong>Phone:</strong> ${data.donorPhone}</li>
-    </ul>
-    <p>Please coordinate with the donor to arrange the donation.</p>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #dc2626; text-align: center;">🎉 Donor Found for Your Blood Request!</h2>
+      
+      <p>Dear <strong>${data.requestorName}</strong>,</p>
+      
+      <p>Great news! We have found a donor for your <strong>${data.bloodGroup}</strong> blood request.</p>
+      
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #374151; margin-top: 0;">Donor Contact Information:</h3>
+        <ul style="list-style: none; padding: 0;">
+          <li style="margin: 8px 0;"><strong>Name:</strong> ${data.donorName}</li>
+          <li style="margin: 8px 0;"><strong>Email:</strong> ${data.donorEmail}</li>
+          <li style="margin: 8px 0;"><strong>Phone:</strong> ${data.donorPhone || 'Not provided'}</li>
+          <li style="margin: 8px 0;"><strong>Blood Group:</strong> ${data.bloodGroup}</li>
+        </ul>
+      </div>
+      
+      <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #1e40af; margin-top: 0;">Your Request Details:</h3>
+        <ul style="list-style: none; padding: 0;">
+          <li style="margin: 8px 0;"><strong>Units Required:</strong> ${data.units}</li>
+          <li style="margin: 8px 0;"><strong>Hospital:</strong> ${data.hospitalName}</li>
+          <li style="margin: 8px 0;"><strong>Location:</strong> ${data.location}</li>
+          <li style="margin: 8px 0;"><strong>Required Date & Time:</strong> ${new Date(data.dateTime).toLocaleString()}</li>
+        </ul>
+      </div>
+      
+      <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="color: #92400e; margin-top: 0;">Next Steps:</h4>
+        <ol style="color: #92400e;">
+          <li>Contact the donor directly using the information provided above</li>
+          <li>Coordinate the donation time and location</li>
+          <li>Ensure all medical requirements are met</li>
+          <li>Bring necessary identification and medical documents</li>
+        </ol>
+      </div>
+      
+      <p style="color: #6b7280;">If you have any questions or need assistance, please contact our support team.</p>
+      
+      <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+        <p style="color: #9ca3af; font-size: 14px;">
+          Thank you for using BloodConnect<br>
+          Saving lives together ❤️
+        </p>
+      </div>
+    </div>
   `,
 
   donorSelected: (data: any) => `
-    <h2>You've Been Selected as a Donor</h2>
-    <p>Dear ${data.donorName},</p>
-    <p>Thank you for opting in! You have been selected to donate ${data.bloodGroup} blood.</p>
-    <p><strong>Requestor Contact Information:</strong></p>
-    <ul>
-      <li><strong>Name:</strong> ${data.requestorName}</li>
-      <li><strong>Email:</strong> ${data.requestorEmail}</li>
-      <li><strong>Phone:</strong> ${data.requestorPhone}</li>
-    </ul>
-    <p><strong>Donation Details:</strong></p>
-    <ul>
-      <li><strong>Hospital:</strong> ${data.hospitalName}</li>
-      <li><strong>Location:</strong> ${data.location}</li>
-      <li><strong>Date & Time:</strong> ${new Date(data.dateTime).toLocaleString()}</li>
-    </ul>
-    <p>Please coordinate with the requestor to finalize the donation arrangements.</p>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #dc2626; text-align: center;">🩸 You've Been Selected as a Blood Donor!</h2>
+      
+      <p>Dear <strong>${data.donorName}</strong>,</p>
+      
+      <p>Thank you for opting in! You have been selected to donate <strong>${data.bloodGroup}</strong> blood. Your willingness to help save lives is truly appreciated.</p>
+      
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #374151; margin-top: 0;">Requestor Contact Information:</h3>
+        <ul style="list-style: none; padding: 0;">
+          <li style="margin: 8px 0;"><strong>Name:</strong> ${data.requestorName}</li>
+          <li style="margin: 8px 0;"><strong>Email:</strong> ${data.requestorEmail}</li>
+          <li style="margin: 8px 0;"><strong>Phone:</strong> ${data.requestorPhone}</li>
+        </ul>
+      </div>
+      
+      <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #dc2626; margin-top: 0;">Donation Details:</h3>
+        <ul style="list-style: none; padding: 0;">
+          <li style="margin: 8px 0;"><strong>Blood Group:</strong> ${data.bloodGroup}</li>
+          <li style="margin: 8px 0;"><strong>Units Required:</strong> ${data.units}</li>
+          <li style="margin: 8px 0;"><strong>Urgency:</strong> <span style="text-transform: capitalize; color: ${data.urgency === 'critical' ? '#dc2626' : data.urgency === 'high' ? '#ea580c' : data.urgency === 'medium' ? '#ca8a04' : '#16a34a'};">${data.urgency}</span></li>
+          <li style="margin: 8px 0;"><strong>Hospital:</strong> ${data.hospitalName}</li>
+          <li style="margin: 8px 0;"><strong>Location:</strong> ${data.location}</li>
+          <li style="margin: 8px 0;"><strong>Required Date & Time:</strong> ${new Date(data.dateTime).toLocaleString()}</li>
+        </ul>
+      </div>
+      
+      <div style="background-color: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="color: #166534; margin-top: 0;">What to do next:</h4>
+        <ol style="color: #166534;">
+          <li>Contact the requestor using the information provided above</li>
+          <li>Coordinate the donation time and confirm the location</li>
+          <li>Ensure you're well-rested and have eaten before donation</li>
+          <li>Bring a valid ID and any required medical documents</li>
+          <li>Follow all pre-donation guidelines</li>
+        </ol>
+      </div>
+      
+      <div style="background-color: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="color: #1e40af; margin-top: 0;">Pre-Donation Reminders:</h4>
+        <ul style="color: #1e40af; list-style: disc; padding-left: 20px;">
+          <li>Get adequate sleep (6-8 hours)</li>
+          <li>Eat a healthy meal before donation</li>
+          <li>Drink plenty of water</li>
+          <li>Avoid alcohol for 24 hours before donation</li>
+          <li>Inform about any medications you're taking</li>
+        </ul>
+      </div>
+      
+      <p style="color: #6b7280;">If you have any questions or concerns, please contact our support team immediately.</p>
+      
+      <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+        <p style="color: #9ca3af; font-size: 14px;">
+          Thank you for being a life-saver!<br>
+          BloodConnect Team ❤️
+        </p>
+      </div>
+    </div>
   `,
 
   studentWelcome: (data: any) => `
