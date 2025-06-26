@@ -1,0 +1,9 @@
+The foloowing changes to be done in the codes>
+
+1. Once i am assigned as a donor, then it states that i am unavialable for the next 3 months foor thenext donation. this has to be updateed in the softarre.
+2. When the user fills the forms, along with the admin email notification a email has to be snet to the user aswell statsing the form filled data.
+3. In the student login remove the button makr as available / mark as unavailable since it will determined based on their previous donaion date
+4. Account Security - Change Password , Login History , enable these features for all type of users as well.
+
+<BOLT NEXT UPCOMMING CHANGES>
+
