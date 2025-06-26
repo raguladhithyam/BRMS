@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -36,17 +36,79 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || 3001;
+const KEEP_ALIVE_URL = process.env.KEEP_ALIVE_URL;
+const INACTIVITY_THRESHOLD = 5 * 60 * 1000; // 5 minutes in milliseconds
+const KEEP_ALIVE_INTERVAL = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+// Activity tracking
+let lastActivity = Date.now();
+let keepAliveInterval = null;
+
+// Function to update last activity
+const updateActivity = () => {
+  lastActivity = Date.now();
+};
+
+// Function to send keep-alive request
+const sendKeepAlive = async () => {
+  try {
+    const timeSinceLastActivity = Date.now() - lastActivity;
+    console.log(`Checking activity: ${Math.round(timeSinceLastActivity / 1000)}s since last activity`);
+    
+    if (timeSinceLastActivity > INACTIVITY_THRESHOLD) {
+      console.log('Sending keep-alive request to prevent spin-down');
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(`${KEEP_ALIVE_URL}/health`, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Keep-Alive-Bot',
+          'X-Keep-Alive': 'true'
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        console.log('Keep-alive request successful');
+      } else {
+        console.warn(`Keep-alive request failed with status: ${response.status}`);
+      }
+    } else {
+      console.log('Recent activity detected, skipping keep-alive request');
+    }
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error('Keep-alive request timed out');
+    } else {
+      console.error('Keep-alive request failed:', error.message);
+    }
+  }
+};
+
+// Start keep-alive monitoring (enable if KEEP_ALIVE_URL is set and includes onrender.com)
+if (process.env.KEEP_ALIVE_URL && process.env.KEEP_ALIVE_URL.includes('onrender.com')) {
+  keepAliveInterval = setInterval(sendKeepAlive, KEEP_ALIVE_INTERVAL);
+  console.log(`Keep-alive monitoring started (checking every ${KEEP_ALIVE_INTERVAL / 60000} minutes)`);
+}
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 100 requests per windowMs
+  max: 1000, // limit each IP to 1000 requests per windowMs
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.',
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for keep-alive requests
+    return req.get('X-Keep-Alive') === 'true';
+  }
 });
 
 // Security middleware
@@ -89,12 +151,36 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
-// Logging
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Activity tracking middleware (must be before logging middleware)
+app.use((req, res, next) => {
+  // Don't count keep-alive requests as activity
+  if (req.get('X-Keep-Alive') !== 'true') {
+    updateActivity();
+  }
+  next();
+});
+
+// Logging middleware
+app.use((req, res, next) => {
+  const isKeepAlive = req.get('X-Keep-Alive') === 'true';
+  if (!isKeepAlive && process.env.NODE_ENV !== 'production') {
+    console.log(`${req.method} ${req.path} - ${req.ip}`);
+  } else if (isKeepAlive) {
+    console.log(`Keep-alive request: ${req.method} ${req.path}`);
+  }
+  next();
+});
+
+// Use morgan for production logging
+if (process.env.NODE_ENV === 'production') {
+  app.use(morgan('combined'));
+} else {
+  app.use(morgan('dev'));
+}
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -102,14 +188,32 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Make io available to routes
 app.set('io', io);
 
-// Health check endpoint
+// Enhanced health check endpoint with activity info
 app.get('/health', (req, res) => {
+  const isKeepAlive = req.get('X-Keep-Alive') === 'true';
+  const timeSinceLastActivity = Date.now() - lastActivity;
+  
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || 'development',
     version: process.env.npm_package_version || '1.0.0',
+    lastActivity: new Date(lastActivity).toISOString(),
+    timeSinceLastActivity: Math.round(timeSinceLastActivity / 1000),
+    isKeepAliveRequest: isKeepAlive
+  });
+});
+
+// Activity status endpoint
+app.get('/api/activity-status', (req, res) => {
+  const timeSinceLastActivity = Date.now() - lastActivity;
+  res.json({
+    lastActivity: new Date(lastActivity).toISOString(),
+    timeSinceLastActivity: Math.round(timeSinceLastActivity / 1000),
+    thresholdSeconds: INACTIVITY_THRESHOLD / 1000,
+    isInactive: timeSinceLastActivity > INACTIVITY_THRESHOLD,
+    keepAliveEnabled: !!(process.env.KEEP_ALIVE_URL && process.env.KEEP_ALIVE_URL.includes('onrender.com'))
   });
 });
 
@@ -133,9 +237,43 @@ app.get('/api/test', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
+// Enhanced Socket.IO connection handling with activity tracking
+const originalSetupSocketIO = setupSocketIO;
+const enhancedSetupSocketIO = (io: Server) => {
+  // Call original setup
+  originalSetupSocketIO(io);
+  
+  // Add activity tracking to socket events
+  io.on('connection', (socket: Socket) => {
+    updateActivity(); // Update activity on socket connection
+    console.log(`User connected: ${socket.id}`);
+    
+    socket.on('join-room', (userId: string) => {
+      updateActivity();
+      socket.join(`user-${userId}`);
+      console.log(`User ${userId} joined room`);
+    });
+    
+    socket.on('disconnect', () => {
+      console.log(`User disconnected: ${socket.id}`);
+    });
+    
+    // Update activity on any socket event
+    socket.onAny(() => {
+      updateActivity();
+    });
+  });
+};
+
 // Graceful shutdown handler
 const gracefulShutdown = async (signal: string) => {
   console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
+  
+  // Clear keep-alive interval
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+    console.log('⏰ Keep-alive monitoring stopped');
+  }
   
   server.close(async () => {
     console.log('🔌 HTTP server closed');
@@ -192,8 +330,8 @@ async function startServer() {
     // Connect to Redis (optional)
     await connectRedis();
     
-    // Setup Socket.IO
-    setupSocketIO(io);
+    // Setup Socket.IO with activity tracking
+    enhancedSetupSocketIO(io);
     console.log('✅ Socket.IO configured successfully');
     
     // Start server
@@ -204,6 +342,7 @@ async function startServer() {
       console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
       console.log(`🧪 Test endpoint: http://localhost:${PORT}/api/test`);
+      console.log(`⏰ Keep-alive monitoring: ${(process.env.KEEP_ALIVE_URL && process.env.KEEP_ALIVE_URL.includes('onrender.com')) ? 'ENABLED' : 'DISABLED'}`);
       console.log('\n📋 Available endpoints:');
       console.log('   POST /api/auth/login');
       console.log('   POST /api/auth/register');
@@ -211,6 +350,7 @@ async function startServer() {
       console.log('   POST /api/requests');
       console.log('   GET  /api/admin/requests');
       console.log('   GET  /api/admin/students');
+      console.log('   GET  /api/activity-status');
       console.log('\n✨ Ready to accept connections!');
     });
   } catch (error) {
