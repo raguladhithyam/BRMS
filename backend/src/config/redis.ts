@@ -3,8 +3,14 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Redis Client Configuration Localhost
+// const redisClient = createClient({
+//   url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`
+// });
+
+// Redis Client Configuration Production (Railway)
 const redisClient = createClient({
-  url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`
+  url: `redis://default:MqFwonGEyZblDUmpQKTweKiCwdubvbGT@redis.railway.internal:6379`
 });
 
 redisClient.on('error', (err) => {
