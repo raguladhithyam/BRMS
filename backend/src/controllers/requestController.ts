@@ -147,6 +147,24 @@ export const createBloodRequest = async (req: Request, res: Response): Promise<v
           },
         });
       }
+
+      // Send confirmation email to requestor
+      await sendEmail({
+        to: [bloodRequest.email],
+        subject: 'Blood Request Submitted Successfully',
+        template: 'requestConfirmation',
+        data: {
+          requestorName: bloodRequest.requestorName,
+          bloodGroup: bloodRequest.bloodGroup,
+          units: bloodRequest.units,
+          urgency: bloodRequest.urgency,
+          hospitalName: bloodRequest.hospitalName,
+          location: bloodRequest.location,
+          dateTime: bloodRequest.dateTime,
+          notes: bloodRequest.notes,
+        },
+      });
+
     } catch (notificationError) {
       console.error('Error sending notifications:', notificationError);
       // Don't fail the request if notifications fail
@@ -177,7 +195,13 @@ export const getMatchingRequests = async (req: AuthRequest, res: Response): Prom
       return;
     }
 
-    // Get approved requests matching user's blood group
+    // Update user availability based on donation eligibility
+    const isAvailable = req.user.isAvailableForDonation();
+    if (req.user.availability !== isAvailable) {
+      await req.user.update({ availability: isAvailable });
+    }
+
+    // Get approved requests matching user's blood group (only if user is available)
     const matchingRequests = await BloodRequest.findAll({
       where: {
         bloodGroup: req.user.bloodGroup,
@@ -202,9 +226,12 @@ export const getMatchingRequests = async (req: AuthRequest, res: Response): Prom
       order: [['urgency', 'DESC'], ['createdAt', 'ASC']],
     });
 
+    // Only return requests if user is available for donation
+    const filteredRequests = req.user.availability ? matchingRequests : [];
+
     res.json({
       success: true,
-      data: matchingRequests,
+      data: filteredRequests,
     });
   } catch (error) {
     console.error('Get matching requests error:', error);
@@ -227,11 +254,12 @@ export const optInToRequest = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    // Check if user is available
-    if (!req.user.availability) {
+    // Check if user is available for donation (3 months rule)
+    if (!req.user.isAvailableForDonation()) {
+      const nextAvailableDate = req.user.getNextAvailableDonationDate();
       res.status(400).json({
         success: false,
-        message: 'You are currently marked as unavailable',
+        message: `You are not eligible to donate yet. You can donate again after ${nextAvailableDate?.toLocaleDateString()}`,
       });
       return;
     }

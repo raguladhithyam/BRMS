@@ -1,5 +1,5 @@
 import api from '../utils/api';
-import { AuthResponse, User } from '../types';
+import { AuthResponse, User, LoginHistory, PaginatedResponse } from '../types';
 
 export const authApi = {
   login: async (email: string, password: string): Promise<AuthResponse> => {
@@ -29,25 +29,37 @@ export const authApi = {
     await api.post('/auth/logout');
   },
 
-updateProfile: async (userData: Partial<User>): Promise<User> => {
-  const mappedData: any = {
-    ...userData,
-    bloodGroup: userData.bloodGroup,
-    rollNo: userData.rollNo,
-  };
+  updateProfile: async (userData: Partial<User>): Promise<User> => {
+    const mappedData: any = {
+      ...userData,
+      bloodGroup: userData.bloodGroup,
+      rollNo: userData.rollNo,
+    };
 
-  // Remove undefined fields
-  if (!mappedData.rollNo) delete mappedData.rollNo;
-  if (!mappedData.bloodGroup) delete mappedData.bloodGroup;
+    // Remove undefined fields
+    if (!mappedData.rollNo) delete mappedData.rollNo;
+    if (!mappedData.bloodGroup) delete mappedData.bloodGroup;
 
-  console.log("Mapped payload:", mappedData);
+    console.log("Mapped payload:", mappedData);
 
-  try {
-    const response = await api.put('/auth/profile', mappedData);
+    try {
+      const response = await api.put('/auth/profile', mappedData);
+      return response.data.data;
+    } catch (err: any) {
+      console.error("Profile update failed:", err.response?.data || err.message);
+      throw err;
+    }
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    await api.put('/auth/change-password', { currentPassword, newPassword });
+  },
+
+  getLoginHistory: async (params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<LoginHistory>> => {
+    const response = await api.get('/auth/login-history', { params });
     return response.data.data;
-  } catch (err: any) {
-    console.error("Profile update failed:", err.response?.data || err.message);
-    throw err;
-  }
-},
+  },
 };

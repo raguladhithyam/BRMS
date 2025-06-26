@@ -12,6 +12,7 @@ interface UserAttributes {
   rollNo?: string;
   phone?: string;
   availability?: boolean;
+  lastDonationDate?: Date;
   lastLogin?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -29,6 +30,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public rollNo?: string;
   public phone?: string;
   public availability?: boolean;
+  public lastDonationDate?: Date;
   public lastLogin?: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -42,6 +44,26 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
     const values = { ...this.get() };
     delete values.password;
     return values;
+  }
+
+  // Check if user is available for donation (3 months since last donation)
+  public isAvailableForDonation(): boolean {
+    if (!this.lastDonationDate) return true;
+    
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
+    return this.lastDonationDate <= threeMonthsAgo;
+  }
+
+  // Get next available donation date
+  public getNextAvailableDonationDate(): Date | null {
+    if (!this.lastDonationDate) return null;
+    
+    const nextDate = new Date(this.lastDonationDate);
+    nextDate.setMonth(nextDate.getMonth() + 3);
+    
+    return nextDate;
   }
 }
 
@@ -99,6 +121,10 @@ User.init(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    lastDonationDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     lastLogin: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -119,6 +145,15 @@ User.init(
         if (user.changed('password')) {
           const salt = await bcrypt.genSalt(12);
           user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
+      afterUpdate: async (user: User) => {
+        // Auto-update availability based on donation eligibility
+        if (user.role === 'student' && user.changed('lastDonationDate')) {
+          const isAvailable = user.isAvailableForDonation();
+          if (user.availability !== isAvailable) {
+            await user.update({ availability: isAvailable }, { hooks: false });
+          }
         }
       },
     },

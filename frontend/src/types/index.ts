@@ -7,6 +7,7 @@ export interface User {
   availability?: boolean;
   rollNo?: string;
   phone?: string;
+  lastDonationDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,6 +49,19 @@ export interface Notification {
   read: boolean;
   createdAt: string;
   metadata?: any;
+}
+
+export interface LoginHistory {
+  id: string;
+  userId: string;
+  ipAddress: string;
+  userAgent: string;
+  loginTime: string;
+  logoutTime?: string;
+  isActive: boolean;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuthResponse {

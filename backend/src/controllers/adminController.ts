@@ -154,7 +154,7 @@ export const approveRequest = async (req: Request, res: Response): Promise<void>
     // Get Socket.IO instance
     const io = req.app.get('io');
 
-    // Find matching students
+    // Find matching students who are available for donation
     const matchingStudents = await User.findAll({
       where: {
         role: 'student',
@@ -163,8 +163,11 @@ export const approveRequest = async (req: Request, res: Response): Promise<void>
       },
     });
 
-    // Notify matching students
-    for (const student of matchingStudents) {
+    // Filter students who are actually eligible (3 months since last donation)
+    const eligibleStudents = matchingStudents.filter(student => student.isAvailableForDonation());
+
+    // Notify eligible students
+    for (const student of eligibleStudents) {
       emitToUser(io, student.id, 'request_approved', {
         message: `New ${bloodRequest.bloodGroup} blood request approved`,
         bloodGroup: bloodRequest.bloodGroup,
@@ -181,8 +184,8 @@ export const approveRequest = async (req: Request, res: Response): Promise<void>
       });
     }
 
-    // Send emails to matching students
-    const studentEmails = matchingStudents.map(student => student.email);
+    // Send emails to eligible students
+    const studentEmails = eligibleStudents.map(student => student.email);
     if (studentEmails.length > 0) {
       await sendEmail({
         to: studentEmails,
@@ -355,7 +358,13 @@ export const fulfillRequest = async (req: Request, res: Response): Promise<void>
       assignedDonorId: donorId,
     });
 
-    console.log('Updated blood request status to fulfilled');
+    // Update donor's last donation date and availability
+    await donor.update({
+      lastDonationDate: new Date(),
+      availability: false, // Will be unavailable for next 3 months
+    });
+
+    console.log('Updated blood request status to fulfilled and donor availability');
 
     // Get Socket.IO instance
     const io = req.app.get('io');

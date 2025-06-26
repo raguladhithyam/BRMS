@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Clock, CheckCircle, AlertCircle, Calendar, MapPin, Phone } from 'lucide-react';
+import { Heart, Clock, CheckCircle, AlertCircle, Calendar, MapPin, Phone, AlertTriangle } from 'lucide-react';
 import { Card } from '../../components/shared/Card';
 import { Button } from '../../components/shared/Button';
 import { Badge } from '../../components/shared/Badge';
@@ -7,21 +7,14 @@ import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import { useStudentRequests } from '../../hooks/useRequests';
-import { format } from 'date-fns';
+import { format, addMonths } from 'date-fns';
 
 export const StudentDashboard: React.FC = () => {
-  const { user, updateProfile } = useAuth();
+  const { user } = useAuth();
   const { matchingRequests, optIns, isLoading, optIn, isOptingIn } = useStudentRequests();
 
   const handleOptIn = (requestId: string) => {
     optIn(requestId);
-  };
-
-  const handleToggleAvailability = () => {
-    if (user?.availability !== undefined) {
-      // Update availability through the profile update
-      updateProfile({ ...user, availability: !user.availability });
-    }
   };
 
   const getUrgencyColor = (urgency: string) => {
@@ -34,6 +27,17 @@ export const StudentDashboard: React.FC = () => {
     }
   };
 
+  const getNextDonationDate = () => {
+    if (!user?.lastDonationDate) return null;
+    return addMonths(new Date(user.lastDonationDate), 3);
+  };
+
+  const isEligibleForDonation = () => {
+    if (!user?.lastDonationDate) return true;
+    const nextDate = getNextDonationDate();
+    return nextDate ? new Date() >= nextDate : true;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -41,6 +45,9 @@ export const StudentDashboard: React.FC = () => {
       </div>
     );
   }
+
+  const nextDonationDate = getNextDonationDate();
+  const eligible = isEligibleForDonation();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -51,37 +58,57 @@ export const StudentDashboard: React.FC = () => {
         </h1>
         <p className="text-gray-600">
           Your blood type <Badge variant="primary">{user?.bloodGroup}</Badge> can help save lives. 
-          Check out matching requests below.
+          {eligible ? ' Check out matching requests below.' : ' You will be eligible to donate again soon.'}
         </p>
       </div>
 
-      {/* Profile Status Card */}
+      {/* Donation Status Card */}
       <Card className="mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-primary-100 rounded-full">
-              <Heart className="h-8 w-8 text-primary-600" />
+            <div className={`p-3 rounded-full ${eligible ? 'bg-green-100' : 'bg-yellow-100'}`}>
+              <Heart className={`h-8 w-8 ${eligible ? 'text-green-600' : 'text-yellow-600'}`} />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Donor Status</h2>
-              <p className="text-gray-600">
-                You are currently{' '}
-                <Badge variant={user?.availability ? 'success' : 'danger'}>
-                  {user?.availability ? 'Available' : 'Unavailable'}
-                </Badge>
-                {' '}for blood donation
+              <h2 className="text-xl font-semibold text-gray-900">Donation Status</h2>
+              <div className="space-y-1">
+                <p className="text-gray-600">
+                  You are currently{' '}
+                  <Badge variant={eligible ? 'success' : 'warning'}>
+                    {eligible ? 'Eligible for Donation' : 'Not Eligible'}
+                  </Badge>
+                </p>
+                {user?.lastDonationDate && (
+                  <p className="text-sm text-gray-500">
+                    Last donation: {format(new Date(user.lastDonationDate), 'MMM dd, yyyy')}
+                  </p>
+                )}
+                {!eligible && nextDonationDate && (
+                  <p className="text-sm text-yellow-700">
+                    Next eligible date: {format(nextDonationDate, 'MMM dd, yyyy')}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Eligibility Notice */}
+      {!eligible && (
+        <Card className="mb-6 bg-yellow-50 border-yellow-200">
+          <div className="flex items-center space-x-3">
+            <AlertTriangle className="h-5 w-5 text-yellow-600" />
+            <div>
+              <h3 className="font-medium text-yellow-900">Donation Eligibility</h3>
+              <p className="text-sm text-yellow-800">
+                For your health and safety, you must wait 3 months between blood donations. 
+                You'll be automatically eligible again on {nextDonationDate && format(nextDonationDate, 'MMMM dd, yyyy')}.
               </p>
             </div>
           </div>
-          
-          <Button
-            onClick={handleToggleAvailability}
-            variant={user?.availability ? 'outline' : 'primary'}
-          >
-            {user?.availability ? 'Mark Unavailable' : 'Mark Available'}
-          </Button>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Matching Blood Requests */}
@@ -92,12 +119,12 @@ export const StudentDashboard: React.FC = () => {
                 Matching Blood Requests
               </h2>
               <Badge variant="info">
-                {matchingRequests?.length || 0} Available
+                {eligible ? (matchingRequests?.length || 0) : 0} Available
               </Badge>
             </div>
             
             <div className="space-y-4">
-              {matchingRequests && matchingRequests.length > 0 ? (
+              {eligible && matchingRequests && matchingRequests.length > 0 ? (
                 matchingRequests.map((request) => (
                   <div
                     key={request.id}
@@ -142,7 +169,6 @@ export const StudentDashboard: React.FC = () => {
                           size="sm"
                           onClick={() => handleOptIn(request.id)}
                           loading={isOptingIn}
-                          disabled={!user?.availability}
                         >
                           Opt In to Help
                         </Button>
@@ -153,11 +179,11 @@ export const StudentDashboard: React.FC = () => {
               ) : (
                 <EmptyState
                   icon={<Heart className="h-12 w-12" />}
-                  title="No Matching Requests"
+                  title={eligible ? "No Matching Requests" : "Not Eligible for Donation"}
                   description={
-                    user?.availability 
+                    eligible 
                       ? "No blood requests match your blood type at the moment. We'll notify you when new requests arrive."
-                      : "Mark yourself as available to see matching blood requests."
+                      : `You'll be eligible to donate again on ${nextDonationDate && format(nextDonationDate, 'MMMM dd, yyyy')}.`
                   }
                 />
               )}

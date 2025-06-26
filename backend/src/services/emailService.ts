@@ -4,12 +4,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  host: "smtp-relay.sendinblue.com",
-  port: 587,
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT || '587'),
   secure: false,
   auth: {
-    user: "mra20031006@gmail.com",
-    pass: "T2HJ0vgbVO7RrMD4",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
@@ -34,6 +34,56 @@ const templates = {
       <li><strong>Required Date:</strong> ${new Date(data.dateTime).toLocaleString()}</li>
     </ul>
     <p>Please log in to the admin panel to review and approve this request.</p>
+  `,
+
+  requestConfirmation: (data: any) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #dc2626; text-align: center;">🩸 Blood Request Submitted Successfully</h2>
+      
+      <p>Dear <strong>${data.requestorName}</strong>,</p>
+      
+      <p>Thank you for submitting your blood request through BloodConnect. We have received your request and our admin team will review it shortly.</p>
+      
+      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: #374151; margin-top: 0;">Your Request Details:</h3>
+        <ul style="list-style: none; padding: 0;">
+          <li style="margin: 8px 0;"><strong>Blood Group:</strong> ${data.bloodGroup}</li>
+          <li style="margin: 8px 0;"><strong>Units Required:</strong> ${data.units}</li>
+          <li style="margin: 8px 0;"><strong>Urgency Level:</strong> ${data.urgency}</li>
+          <li style="margin: 8px 0;"><strong>Hospital:</strong> ${data.hospitalName}</li>
+          <li style="margin: 8px 0;"><strong>Location:</strong> ${data.location}</li>
+          <li style="margin: 8px 0;"><strong>Required Date & Time:</strong> ${new Date(data.dateTime).toLocaleString()}</li>
+          ${data.notes ? `<li style="margin: 8px 0;"><strong>Additional Notes:</strong> ${data.notes}</li>` : ''}
+        </ul>
+      </div>
+      
+      <div style="background-color: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="color: #1e40af; margin-top: 0;">What happens next?</h4>
+        <ol style="color: #1e40af;">
+          <li>Our admin team will review your request within 2-4 hours</li>
+          <li>Once approved, eligible donors will be notified automatically</li>
+          <li>You'll receive donor contact information when someone opts in</li>
+          <li>We'll keep you updated throughout the process</li>
+        </ol>
+      </div>
+      
+      <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="color: #92400e; margin-top: 0;">Emergency Contact:</h4>
+        <p style="color: #92400e; margin: 0;">
+          For urgent requests, please call: <strong>+1 (555) 123-4567</strong><br>
+          Available 24/7 for critical situations
+        </p>
+      </div>
+      
+      <p style="color: #6b7280;">If you have any questions, please don't hesitate to contact our support team.</p>
+      
+      <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+        <p style="color: #9ca3af; font-size: 14px;">
+          Thank you for using BloodConnect<br>
+          Saving lives together ❤️
+        </p>
+      </div>
+    </div>
   `,
 
   requestApproved: (data: any) => `
@@ -157,6 +207,13 @@ const templates = {
           <li>Avoid alcohol for 24 hours before donation</li>
           <li>Inform about any medications you're taking</li>
         </ul>
+      </div>
+      
+      <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h4 style="color: #92400e; margin-top: 0;">Important Note:</h4>
+        <p style="color: #92400e; margin: 0;">
+          After this donation, you will be marked as unavailable for the next 3 months to ensure your health and safety. This is in accordance with medical guidelines for blood donation frequency.
+        </p>
       </div>
       
       <p style="color: #6b7280;">If you have any questions or concerns, please contact our support team immediately.</p>

@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Settings, Heart, Phone, Mail, Calendar } from 'lucide-react';
+import { User, Settings, Heart, Phone, Mail, Calendar, Shield, Clock, Eye } from 'lucide-react';
 import { Card } from '../../components/shared/Card';
 import { Button } from '../../components/shared/Button';
 import { Input } from '../../components/shared/Input';
 import Select from '../../components/shared/Select';
 import { Badge } from '../../components/shared/Badge';
+import { Modal } from '../../components/shared/Modal';
 import { useAuth } from '../../hooks/useAuth';
-import { useStudentProfile } from '../../hooks/useStudents';
+import { authApi } from '../../api/auth';
 import { BLOOD_GROUPS } from '../../config/constants';
-import { format } from 'date-fns';
+import { format, addMonths } from 'date-fns';
+import toast from 'react-hot-toast';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -21,11 +23,25 @@ const profileSchema = z.object({
   rollNo: z.string().optional(),
 });
 
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+  confirmPassword: z.string().min(1, 'Please confirm your password'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 type ProfileFormData = z.infer<typeof profileSchema>;
+type PasswordFormData = z.infer<typeof passwordSchema>;
 
 export const ProfilePage: React.FC = () => {
   const { user, updateProfile, isUpdateLoading } = useAuth();
-  const { updateAvailability, isUpdatingAvailability } = useStudentProfile();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showLoginHistoryModal, setShowLoginHistoryModal] = useState(false);
+  const [loginHistory, setLoginHistory] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const {
     register,
@@ -42,13 +58,43 @@ export const ProfilePage: React.FC = () => {
     }
   });
 
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    formState: { errors: passwordErrors },
+    reset: resetPassword,
+  } = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+  });
+
   const onSubmit = (data: ProfileFormData) => {
     updateProfile(data);
   };
 
-  const handleToggleAvailability = () => {
-    if (user) {
-      updateAvailability(!user.availability);
+  const onPasswordSubmit = async (data: PasswordFormData) => {
+    setIsChangingPassword(true);
+    try {
+      await authApi.changePassword(data.currentPassword, data.newPassword);
+      toast.success('Password changed successfully!');
+      setShowPasswordModal(false);
+      resetPassword();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to change password');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const loadLoginHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const response = await authApi.getLoginHistory({ limit: 20 });
+      setLoginHistory(response.data);
+      setShowLoginHistoryModal(true);
+    } catch (error) {
+      toast.error('Failed to load login history');
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 
@@ -56,6 +102,20 @@ export const ProfilePage: React.FC = () => {
     value: group,
     label: group
   }));
+
+  const getNextDonationDate = () => {
+    if (!user?.lastDonationDate) return null;
+    return addMonths(new Date(user.lastDonationDate), 3);
+  };
+
+  const isEligibleForDonation = () => {
+    if (!user?.lastDonationDate) return true;
+    const nextDate = getNextDonationDate();
+    return nextDate ? new Date() >= nextDate : true;
+  };
+
+  const nextDonationDate = getNextDonationDate();
+  const eligible = isEligibleForDonation();
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -178,7 +238,7 @@ export const ProfilePage: React.FC = () => {
             <Card>
               <div className="flex items-center mb-4">
                 <Heart className="h-5 w-5 mr-2 text-primary-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Donor Settings</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Donor Status</h3>
               </div>
               
               <div className="space-y-4">
@@ -192,42 +252,57 @@ export const ProfilePage: React.FC = () => {
                 
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">Availability Status</p>
+                    <p className="font-medium text-gray-900">Donation Eligibility</p>
                     <p className="text-sm text-gray-600">
-                      {user.availability ? 'Ready to donate' : 'Currently unavailable'}
+                      {eligible ? 'Ready to donate' : 'Must wait 3 months between donations'}
                     </p>
                   </div>
-                  <Badge variant={user.availability ? 'success' : 'danger'}>
-                    {user.availability ? 'Available' : 'Unavailable'}
+                  <Badge variant={eligible ? 'success' : 'warning'}>
+                    {eligible ? 'Eligible' : 'Not Eligible'}
                   </Badge>
                 </div>
-                
-                <Button
-                  onClick={handleToggleAvailability}
-                  loading={isUpdatingAvailability}
-                  variant={user.availability ? 'outline' : 'primary'}
-                  className="w-full"
-                >
-                  {user.availability ? 'Mark as Unavailable' : 'Mark as Available'}
-                </Button>
+
+                {user.lastDonationDate && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm font-medium text-blue-900">Last Donation</p>
+                    <p className="text-sm text-blue-700">
+                      {format(new Date(user.lastDonationDate), 'MMMM dd, yyyy')}
+                    </p>
+                    {!eligible && nextDonationDate && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        Next eligible: {format(nextDonationDate, 'MMMM dd, yyyy')}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </Card>
           )}
 
           {/* Account Security */}
           <Card>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Security</h3>
+            <div className="flex items-center mb-4">
+              <Shield className="h-5 w-5 mr-2 text-primary-600" />
+              <h3 className="text-lg font-semibold text-gray-900">Account Security</h3>
+            </div>
             
             <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => setShowPasswordModal(true)}
+              >
+                <Shield className="h-4 w-4 mr-2" />
                 Change Password
               </Button>
               
-              <Button variant="outline" className="w-full justify-start">
-                Two-Factor Authentication
-              </Button>
-              
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={loadLoginHistory}
+                loading={isLoadingHistory}
+              >
+                <Clock className="h-4 w-4 mr-2" />
                 Login History
               </Button>
             </div>
@@ -253,6 +328,107 @@ export const ProfilePage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <Modal
+        isOpen={showPasswordModal}
+        onClose={() => {
+          setShowPasswordModal(false);
+          resetPassword();
+        }}
+        title="Change Password"
+      >
+        <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4">
+          <Input
+            label="Current Password"
+            type="password"
+            {...registerPassword('currentPassword')}
+            error={passwordErrors.currentPassword?.message}
+            required
+          />
+          
+          <Input
+            label="New Password"
+            type="password"
+            {...registerPassword('newPassword')}
+            error={passwordErrors.newPassword?.message}
+            required
+          />
+          
+          <Input
+            label="Confirm New Password"
+            type="password"
+            {...registerPassword('confirmPassword')}
+            error={passwordErrors.confirmPassword?.message}
+            required
+          />
+          
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowPasswordModal(false);
+                resetPassword();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              loading={isChangingPassword}
+            >
+              Change Password
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Login History Modal */}
+      <Modal
+        isOpen={showLoginHistoryModal}
+        onClose={() => setShowLoginHistoryModal(false)}
+        title="Login History"
+        size="lg"
+      >
+        <div className="space-y-4">
+          {loginHistory.length > 0 ? (
+            loginHistory.map((session) => (
+              <div
+                key={session.id}
+                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-full ${session.isActive ? 'bg-green-100' : 'bg-gray-100'}`}>
+                    <Eye className={`h-4 w-4 ${session.isActive ? 'text-green-600' : 'text-gray-600'}`} />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {format(new Date(session.loginTime), 'MMM dd, yyyy HH:mm')}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {session.ipAddress} • {session.userAgent.split(' ')[0]}
+                    </p>
+                    {session.logoutTime && (
+                      <p className="text-xs text-gray-500">
+                        Logged out: {format(new Date(session.logoutTime), 'MMM dd, yyyy HH:mm')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Badge variant={session.isActive ? 'success' : 'secondary'}>
+                  {session.isActive ? 'Active' : 'Ended'}
+                </Badge>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Clock className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p>No login history available</p>
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };
