@@ -1,0 +1,117 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { requestsApi } from '../api/requests';
+import { QUERY_KEYS } from '../config/constants';
+import toast from 'react-hot-toast';
+
+export const useRequests = () => {
+  const queryClient = useQueryClient();
+
+  const createRequestMutation = useMutation({
+    mutationFn: requestsApi.create,
+    onSuccess: () => {
+      toast.success('Blood request submitted successfully!');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOOD_REQUESTS] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to submit request');
+    },
+  });
+
+  return {
+    createRequest: createRequestMutation.mutate,
+    isCreating: createRequestMutation.isPending,
+  };
+};
+
+export const useAdminRequests = (params?: any) => {
+  const queryClient = useQueryClient();
+
+  const { data: requests, isLoading, error } = useQuery({
+    queryKey: [QUERY_KEYS.BLOOD_REQUESTS, 'admin', params],
+    queryFn: () => requestsApi.getAll(params),
+    enabled: true,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: requestsApi.approve,
+    onSuccess: () => {
+      toast.success('Request approved successfully!');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOOD_REQUESTS] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to approve request');
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      requestsApi.reject(id, reason),
+    onSuccess: () => {
+      toast.success('Request rejected!');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOOD_REQUESTS] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to reject request');
+    },
+  });
+
+  const fulfillMutation = useMutation({
+    mutationFn: ({ id, donorId }: { id: string; donorId: string }) =>
+      requestsApi.fulfill(id, donorId),
+    onSuccess: () => {
+      toast.success('Request fulfilled successfully!');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOOD_REQUESTS] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to fulfill request');
+    },
+  });
+
+  return {
+    requests,
+    isLoading,
+    error,
+    approveRequest: approveMutation.mutate,
+    rejectRequest: rejectMutation.mutate,
+    fulfillRequest: fulfillMutation.mutate,
+    isApproving: approveMutation.isPending,
+    isRejecting: rejectMutation.isPending,
+    isFulfilling: fulfillMutation.isPending,
+  };
+};
+
+export const useStudentRequests = () => {
+  const queryClient = useQueryClient();
+
+  const { data: matchingRequests, isLoading: isLoadingMatching } = useQuery({
+    queryKey: [QUERY_KEYS.MATCHING_REQUESTS],
+    queryFn: requestsApi.getMatching,
+    enabled: true,
+  });
+
+  const { data: optIns, isLoading: isLoadingOptIns } = useQuery({
+    queryKey: [QUERY_KEYS.OPT_INS],
+    queryFn: requestsApi.getOptIns,
+    enabled: true,
+  });
+
+  const optInMutation = useMutation({
+    mutationFn: requestsApi.optIn,
+    onSuccess: () => {
+      toast.success('Opted in successfully!');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.MATCHING_REQUESTS] });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.OPT_INS] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to opt in');
+    },
+  });
+
+  return {
+    matchingRequests,
+    optIns,
+    isLoading: isLoadingMatching || isLoadingOptIns,
+    optIn: optInMutation.mutate,
+    isOptingIn: optInMutation.isPending,
+  };
+};

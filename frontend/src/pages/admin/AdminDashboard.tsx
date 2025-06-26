@@ -1,0 +1,231 @@
+import React from 'react';
+import { Users, FileText, Clock, CheckCircle, AlertTriangle, Heart, TrendingUp } from 'lucide-react';
+import { Card } from '../../components/shared/Card';
+import { Badge } from '../../components/shared/Badge';
+import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
+import { useDashboard } from '../../hooks/useDashboard';
+import { useAdminRequests } from '../../hooks/useRequests';
+import { cn } from '../../utils/cn';
+
+export const AdminDashboard: React.FC = () => {
+  const { stats, bloodGroupStats, isLoading } = useDashboard();
+  const { requests } = useAdminRequests({ limit: 5, page: 1 });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  const statCards = [
+    {
+      title: 'Total Requests',
+      value: stats?.totalRequests || 0,
+      icon: FileText,
+      color: 'text-blue-600 bg-blue-100',
+      trend: '+12%',
+    },
+    {
+      title: 'Pending Review',
+      value: stats?.pendingRequests || 0,
+      icon: Clock,
+      color: 'text-yellow-600 bg-yellow-100',
+      trend: '+5%',
+    },
+    {
+      title: 'Approved Today',
+      value: stats?.approvedRequests || 0,
+      icon: CheckCircle,
+      color: 'text-green-600 bg-green-100',
+      trend: '+8%',
+    },
+    {
+      title: 'Active Donors',
+      value: stats?.availableStudents || 0,
+      icon: Users,
+      color: 'text-primary-600 bg-primary-100',
+      trend: '+15%',
+    },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+        <p className="text-gray-600">
+          Monitor blood requests, manage donors, and save lives through efficient coordination.
+        </p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {statCards.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={stat.title} hover className="relative overflow-hidden">
+              <div className="flex items-center">
+                <div className={cn("p-3 rounded-lg", stat.color)}>
+                  <Icon className="h-6 w-6" />
+                </div>
+                <div className="ml-4 flex-1">
+                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                  <div className="flex items-center">
+                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <span className="ml-2 text-xs font-medium text-green-600 flex items-center">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      {stat.trend}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Recent Requests */}
+        <div className="lg:col-span-2">
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Recent Blood Requests</h2>
+              <Badge variant="info">{requests?.data?.length || 0} Pending</Badge>
+            </div>
+            
+            <div className="space-y-4">
+              {requests?.data?.map((request) => (
+                <div
+                  key={request.id}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="p-2 bg-primary-100 rounded-full">
+                      <Heart className="h-4 w-4 text-primary-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">{request.requestorName}</h3>
+                      <p className="text-sm text-gray-600">
+                        {request.bloodGroup} • {request.units} unit(s) • {request.hospitalName}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Badge
+                      variant={
+                        request.urgency === 'critical' ? 'danger' :
+                        request.urgency === 'high' ? 'warning' :
+                        request.urgency === 'medium' ? 'info' : 'secondary'
+                      }
+                    >
+                      {request.urgency}
+                    </Badge>
+                    
+                    <Badge
+                      variant={
+                        request.status === 'pending' ? 'warning' :
+                        request.status === 'approved' ? 'info' :
+                        request.status === 'fulfilled' ? 'success' : 'danger'
+                      }
+                    >
+                      {request.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+              
+              {(!requests?.data || requests.data.length === 0) && (
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No recent requests to display</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+
+        {/* Blood Group Statistics */}
+        <div>
+          <Card>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Blood Group Availability</h2>
+            
+            <div className="space-y-4">
+              {bloodGroupStats?.map((group) => (
+                <div key={group.bloodGroup} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold text-primary-600">
+                        {group.bloodGroup}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{group.bloodGroup}</p>
+                      <p className="text-xs text-gray-600">
+                        {group.availableStudents} available
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">
+                      {group.totalRequests} requests
+                    </p>
+                    <div className="w-16 bg-gray-200 rounded-full h-1.5 mt-1">
+                      <div
+                        className="bg-primary-600 h-1.5 rounded-full"
+                        style={{
+                          width: `${Math.min(
+                            (group.availableStudents / Math.max(group.totalRequests, 1)) * 100,
+                            100
+                          )}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {(!bloodGroupStats || bloodGroupStats.length === 0) && (
+                <div className="text-center py-8 text-gray-500">
+                  <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>No blood group data available</p>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card className="mt-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            
+            <div className="space-y-3">
+              <button className="w-full p-3 text-left bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors">
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-5 w-5 text-primary-600" />
+                  <span className="font-medium text-primary-700">Review Pending Requests</span>
+                </div>
+              </button>
+              
+              <button className="w-full p-3 text-left bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                <div className="flex items-center space-x-3">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  <span className="font-medium text-blue-700">Manage Donors</span>
+                </div>
+              </button>
+              
+              <button className="w-full p-3 text-left bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span className="font-medium text-green-700">View Success Reports</span>
+                </div>
+              </button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
