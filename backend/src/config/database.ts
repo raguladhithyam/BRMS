@@ -7,8 +7,8 @@ const sequelize = new Sequelize({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME || 'blood_request_db',
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
+  username: process.env.DB_USER || 'ragul',
+  password: process.env.DB_PASSWORD || 'mynameisragul1@',
   dialect: 'postgres',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
@@ -26,14 +26,14 @@ const sequelize = new Sequelize({
 export const connectDatabase = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
+    console.log('✅ Database connection established successfully.');
     
     if (process.env.NODE_ENV !== 'production') {
-      await sequelize.sync({ alter: true });
+      await sequelize.sync({ alter: false }); // Don't alter in production
+      console.log('✅ Database synchronized successfully.');
     }
-    
-    console.log('Database connection established successfully.');
   } catch (error) {
-    console.error('Unable to connect to the database:', error);
+    console.error('❌ Unable to connect to the database:', error);
     throw error;
   }
 };

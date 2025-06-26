@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, FileText, Clock, CheckCircle, AlertTriangle, Heart, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Add this import
 import { Card } from '../../components/shared/Card';
 import { Badge } from '../../components/shared/Badge';
 import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
@@ -8,8 +9,18 @@ import { useAdminRequests } from '../../hooks/useRequests';
 import { cn } from '../../utils/cn';
 
 export const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate(); // Add navigation hook
   const { stats, bloodGroupStats, isLoading } = useDashboard();
   const { requests } = useAdminRequests({ limit: 5, page: 1 });
+
+  // Navigation handlers
+  const handleReviewRequests = () => {
+    navigate('/admin/requests');
+  };
+
+  const handleManageDonors = () => {
+    navigate('/admin/students');
+  };
 
   if (isLoading) {
     return (
@@ -202,26 +213,26 @@ export const AdminDashboard: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
             
             <div className="space-y-3">
-              <button className="w-full p-3 text-left bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors">
+              <button 
+                onClick={handleReviewRequests}
+                className="w-full p-3 text-left bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+              >
                 <div className="flex items-center space-x-3">
                   <FileText className="h-5 w-5 text-primary-600" />
                   <span className="font-medium text-primary-700">Review Pending Requests</span>
                 </div>
               </button>
               
-              <button className="w-full p-3 text-left bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+              <button 
+                onClick={handleManageDonors}
+                className="w-full p-3 text-left bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+              >
                 <div className="flex items-center space-x-3">
                   <Users className="h-5 w-5 text-blue-600" />
                   <span className="font-medium text-blue-700">Manage Donors</span>
                 </div>
               </button>
-              
-              <button className="w-full p-3 text-left bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="font-medium text-green-700">View Success Reports</span>
-                </div>
-              </button>
+            
             </div>
           </Card>
         </div>

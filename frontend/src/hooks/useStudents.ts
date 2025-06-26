@@ -6,10 +6,12 @@ import toast from 'react-hot-toast';
 export const useStudents = (params?: any) => {
   const queryClient = useQueryClient();
 
-  const { data: students, isLoading, error } = useQuery({
+  const { data: students, isLoading, error, refetch } = useQuery({
     queryKey: [QUERY_KEYS.STUDENTS, params],
     queryFn: () => studentsApi.getAll(params),
     enabled: true,
+    retry: 1,
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
   const createMutation = useMutation({
@@ -19,7 +21,8 @@ export const useStudents = (params?: any) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STUDENTS] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create student');
+      const message = error.response?.data?.message || 'Failed to create student';
+      toast.error(message);
     },
   });
 
@@ -31,7 +34,8 @@ export const useStudents = (params?: any) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STUDENTS] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update student');
+      const message = error.response?.data?.message || 'Failed to update student';
+      toast.error(message);
     },
   });
 
@@ -42,7 +46,8 @@ export const useStudents = (params?: any) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STUDENTS] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete student');
+      const message = error.response?.data?.message || 'Failed to delete student';
+      toast.error(message);
     },
   });
 
@@ -56,7 +61,8 @@ export const useStudents = (params?: any) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.STUDENTS] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to upload students');
+      const message = error.response?.data?.message || 'Failed to upload students';
+      toast.error(message);
     },
   });
 
@@ -68,7 +74,8 @@ export const useStudents = (params?: any) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update availability');
+      const message = error.response?.data?.message || 'Failed to update availability';
+      toast.error(message);
     },
   });
 
@@ -76,6 +83,7 @@ export const useStudents = (params?: any) => {
     students,
     isLoading,
     error,
+    refetch,
     createStudent: createMutation.mutate,
     updateStudent: updateMutation.mutate,
     deleteStudent: deleteMutation.mutate,

@@ -231,7 +231,7 @@ export const AdminStudents: React.FC = () => {
   const handleTestConnection = async () => {
     console.log('Testing API connection...');
     try {
-      const response = await fetch('/api/students/test');
+      const response = await fetch('/api/health');
       const data = await response.json();
       console.log('API test result:', data);
       alert('API test successful! Check console for details.');

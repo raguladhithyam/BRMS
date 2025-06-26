@@ -4,23 +4,44 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const redisClient = createClient({
-  url: 'redis://localhost:6379'
+  url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`
 });
 
 redisClient.on('error', (err) => {
-  console.error('Redis Client Error:', err);
+  console.error('❌ Redis Client Error:', err);
 });
 
 redisClient.on('connect', () => {
-  console.log('Redis Client Connected');
+  console.log('✅ Redis Client Connected');
+});
+
+redisClient.on('ready', () => {
+  console.log('✅ Redis Client Ready');
+});
+
+redisClient.on('end', () => {
+  console.log('🔌 Redis Client Disconnected');
 });
 
 export const connectRedis = async (): Promise<void> => {
   try {
-    await redisClient.connect();
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+    }
   } catch (error) {
-    console.error('Failed to connect to Redis:', error);
-    throw error;
+    console.error('❌ Failed to connect to Redis:', error);
+    // Don't throw error to prevent app from crashing if Redis is not available
+    console.warn('⚠️ Continuing without Redis cache...');
+  }
+};
+
+export const disconnectRedis = async (): Promise<void> => {
+  try {
+    if (redisClient.isOpen) {
+      await redisClient.disconnect();
+    }
+  } catch (error) {
+    console.error('❌ Error disconnecting Redis:', error);
   }
 };
 
