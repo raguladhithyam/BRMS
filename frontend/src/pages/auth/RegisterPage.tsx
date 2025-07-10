@@ -14,14 +14,9 @@ import { BLOOD_GROUPS } from '../../config/constants';
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
   bloodGroup: z.string().min(1, 'Blood group is required'),
   rollNo: z.string().min(1, 'Roll number is required'),
   phone: z.string().min(10, 'Phone number must be at least 10 digits'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 type FormData = z.infer<typeof schema>;
@@ -39,9 +34,8 @@ export const RegisterPage: React.FC = () => {
   });
 
   const onSubmit = (data: FormData) => {
-    const { confirmPassword, ...userData } = data;
     registerUser(
-      { ...userData, role: 'student' },
+      { ...data, role: 'student' },
       {
         onSuccess: () => {
           navigate('/student');
@@ -129,24 +123,13 @@ export const RegisterPage: React.FC = () => {
               placeholder="+1 (555) 123-4567"
               required
             />
-            
-            <Input
-              label="Password"
-              type="password"
-              {...register('password')}
-              error={errors.password?.message}
-              placeholder="Create a strong password"
-              required
-            />
-            
-            <Input
-              label="Confirm Password"
-              type="password"
-              {...register('confirmPassword')}
-              error={errors.confirmPassword?.message}
-              placeholder="Confirm your password"
-              required
-            />
+
+            {/* Info about password email */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800">
+                After registration, you will receive a temporary password by email. Please check your inbox and use the credentials to log in.
+              </p>
+            </div>
 
             {/* Terms and Conditions */}
             <div className="bg-gray-50 p-4 rounded-lg">

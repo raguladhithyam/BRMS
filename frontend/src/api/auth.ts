@@ -10,7 +10,7 @@ export const authApi = {
   register: async (userData: {
     name: string;
     email: string;
-    password: string;
+    password?: string; // Make password optional
     role: 'student';
     bloodGroup: string;
     rollNo: string;
