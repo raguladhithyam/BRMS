@@ -30,6 +30,7 @@ export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
+      <Route path="/*" element={<Navigate to="/" replace />} />
         {/* Public Routes */}
         <Route index element={<LandingPage />} />
         <Route path="request-blood" element={<BloodRequestForm />} />
