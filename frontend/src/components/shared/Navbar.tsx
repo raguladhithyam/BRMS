@@ -10,7 +10,9 @@ import {
   Menu, 
   X,
   Settings,
-  Home
+  Home,
+  Award,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -33,11 +35,14 @@ export const Navbar: React.FC = () => {
     { path: '/admin', icon: Home, label: 'Dashboard' },
     { path: '/admin/requests', icon: FileText, label: 'Requests' },
     { path: '/admin/students', icon: Users, label: 'Students' },
+    { path: '/admin/certificates', icon: Award, label: 'Certificates' },
+    { path: '/admin/logs', icon: Activity, label: 'Logs' },
   ];
 
   const studentNavItems = [
     { path: '/student', icon: Home, label: 'Dashboard' },
     { path: '/student/requests', icon: FileText, label: 'Blood Requests' },
+    { path: '/student/certificates', icon: Award, label: 'My Certificates' },
   ];
 
   const navItems = user?.role === 'admin' ? adminNavItems : studentNavItems;

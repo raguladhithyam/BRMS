@@ -98,3 +98,24 @@ export interface BloodGroupStats {
   availableStudents: number;
   totalRequests: number;
 }
+
+export interface Certificate {
+  id: string;
+  donorId: string;
+  requestId: string;
+  certificateNumber: string;
+  donorName: string;
+  bloodGroup: string;
+  donationDate: string;
+  hospitalName: string;
+  units: number;
+  status: 'pending' | 'approved' | 'generated';
+  adminApprovedAt?: string;
+  generatedAt?: string;
+  certificateUrl?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  donor?: User;
+  request?: BloodRequest;
+}

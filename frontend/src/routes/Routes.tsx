@@ -13,10 +13,13 @@ import { RegisterPage } from '../pages/auth/RegisterPage';
 import { AdminDashboard } from '../pages/admin/AdminDashboard';
 import { AdminRequests } from '../pages/admin/AdminRequests';
 import { AdminStudents } from '../pages/admin/AdminStudents';
+import { AdminCertificates } from '../pages/admin/AdminCertificates';
+import AdminLogs from '../pages/admin/AdminLogs';
 
 // Student Pages
 import { StudentDashboard } from '../pages/student/StudentDashboard';
 import { StudentRequests } from '../pages/student/StudentRequests';
+import { StudentCertificates } from '../pages/student/StudentCertificates';
 
 // Shared Pages
 import { NotificationsPage } from '../pages/shared/NotificationsPage';
@@ -50,6 +53,16 @@ export const AppRoutes: React.FC = () => {
             <AdminStudents />
           </ProtectedRoute>
         } />
+        <Route path="admin/certificates" element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminCertificates />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/logs" element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminLogs />
+          </ProtectedRoute>
+        } />
 
         {/* Student Routes */}
         <Route path="student" element={
@@ -60,6 +73,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="student/requests" element={
           <ProtectedRoute requiredRole="student">
             <StudentRequests />
+          </ProtectedRoute>
+        } />
+        <Route path="student/certificates" element={
+          <ProtectedRoute requiredRole="student">
+            <StudentCertificates />
           </ProtectedRoute>
         } />
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Clock, CheckCircle, AlertCircle, Calendar, MapPin, Phone, AlertTriangle } from 'lucide-react';
+import { Heart, Clock, CheckCircle, AlertCircle, Calendar, MapPin, Phone, AlertTriangle, Award } from 'lucide-react';
 import { Card } from '../../components/shared/Card';
 import { Button } from '../../components/shared/Button';
 import { Badge } from '../../components/shared/Badge';
@@ -7,14 +7,24 @@ import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { useAuth } from '../../hooks/useAuth';
 import { useStudentRequests } from '../../hooks/useRequests';
+import { useCertificates } from '../../hooks/useCertificates';
 import { format, addMonths } from 'date-fns';
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
   const { matchingRequests, optIns, isLoading, optIn, isOptingIn } = useStudentRequests();
+  const { createCertificateRequest } = useCertificates();
 
   const handleOptIn = (requestId: string) => {
     optIn(requestId);
+  };
+
+  const handleDonationCompleted = async (requestId: string) => {
+    try {
+      await createCertificateRequest(requestId);
+    } catch (error) {
+      console.error('Create certificate request error:', error);
+    }
   };
 
   const getUrgencyColor = (urgency: string) => {
@@ -202,17 +212,28 @@ export const StudentDashboard: React.FC = () => {
                 optIns.slice(0, 5).map((optIn) => (
                   <div
                     key={optIn.id}
-                    className="flex items-center justify-between p-3 bg-green-50 rounded-lg"
+                    className="p-3 bg-green-50 rounded-lg"
                   >
-                    <div>
-                      <p className="font-medium text-green-900">
-                        {optIn.request.requestorName}
-                      </p>
-                      <p className="text-sm text-green-700">
-                        {optIn.request.bloodGroup} • {optIn.request.hospitalName}
-                      </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="font-medium text-green-900">
+                          {optIn.request.requestorName}
+                        </p>
+                        <p className="text-sm text-green-700">
+                          {optIn.request.bloodGroup} • {optIn.request.hospitalName}
+                        </p>
+                      </div>
+                      <Badge variant="success">Opted In</Badge>
                     </div>
-                    <Badge variant="success">Opted In</Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDonationCompleted(optIn.request.id)}
+                      className="w-full mt-2"
+                    >
+                      <Award className="h-4 w-4 mr-2" />
+                      Donation Completed
+                    </Button>
                   </div>
                 ))
               ) : (
