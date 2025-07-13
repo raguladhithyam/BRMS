@@ -40,11 +40,9 @@ export const AdminCertificates: React.FC = () => {
     isLoading, 
     approveCertificate, 
     generateCertificate,
-    approveAndGenerateCertificate,
     downloadCertificate,
     isApproving,
-    isGenerating,
-    isApprovingAndGenerating
+    isGenerating
   } = useAdminCertificates();
 
   const currentCertificates = activeTab === 'pending' ? pendingCertificates : allCertificates;
@@ -82,13 +80,7 @@ export const AdminCertificates: React.FC = () => {
     }
   };
 
-  const handleApproveAndGenerate = async (certificateId: string) => {
-    try {
-      await approveAndGenerateCertificate(certificateId);
-    } catch (error) {
-      console.error('Approve and generate certificate error:', error);
-    }
-  };
+
 
   const handleDownload = async (certificateId: string) => {
     try {
@@ -262,34 +254,23 @@ export const AdminCertificates: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewDetails(certificate)}
+                        title="View Details"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
                       
                       {certificate.status === 'pending' && (
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleApprove(certificate.id)}
-                            loading={isApproving}
-                            className="text-green-600 hover:text-green-700"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleApproveAndGenerate(certificate.id)}
-                            loading={isApprovingAndGenerating}
-                            className="text-purple-600 hover:text-purple-700"
-                          >
-                            <Award className="h-4 w-4 mr-1" />
-                            Approve & Generate
-                          </Button>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleApprove(certificate.id)}
+                          loading={isApproving}
+                          className="text-green-600 hover:text-green-700"
+                          title="Approve Certificate"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Approve
+                        </Button>
                       )}
                       
                       {certificate.status === 'approved' && (
@@ -299,6 +280,7 @@ export const AdminCertificates: React.FC = () => {
                           onClick={() => handleGenerate(certificate.id)}
                           loading={isGenerating}
                           className="text-blue-600 hover:text-blue-700"
+                          title="Generate PDF"
                         >
                           <Award className="h-4 w-4 mr-1" />
                           Generate
@@ -307,12 +289,14 @@ export const AdminCertificates: React.FC = () => {
                       
                       {certificate.status === 'generated' && (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleDownload(certificate.id)}
-                          className="text-purple-600 hover:text-purple-700"
+                          className="text-green-600 hover:text-green-700"
+                          title="Download Certificate"
                         >
-                          <Download className="h-4 w-4" />
+                          <Download className="h-4 w-4 mr-1" />
+                          Download
                         </Button>
                       )}
                     </td>

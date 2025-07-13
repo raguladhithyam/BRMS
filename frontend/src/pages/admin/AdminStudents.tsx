@@ -18,6 +18,8 @@ import { Badge } from '@/components/shared/Badge';
 import { Modal } from '@/components/shared/Modal';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
+import AlertDialog from '@/components/shared/AlertDialog';
+import { useAlertDialog } from '@/hooks/useAlertDialog';
 import { useStudents } from '@/hooks/useStudents';
 import { User } from '@/types';
 import { BLOOD_GROUPS } from '@/config/constants';
@@ -45,6 +47,9 @@ export const AdminStudents: React.FC = () => {
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'opted' | 'assigned'>('all');
+  
+  // AlertDialog hook
+  const alertDialog = useAlertDialog();
   
   // Separate local filters from API filters
   const [localFilters, setLocalFilters] = useState({
@@ -153,11 +158,13 @@ export const AdminStudents: React.FC = () => {
     try {
       await createStudent(data);
       console.log('Student added successfully');
+      alertDialog.showAlert('Success', 'Student added successfully', 'success');
       setShowAddModal(false);
       reset();
       // If you need to refresh data, you might need to add a manual refresh or use a different approach
     } catch (error) {
       console.error('Error adding student:', error);
+      alertDialog.showAlert('Error', 'Failed to add student. Please try again.', 'error');
     }
   };
 
@@ -169,26 +176,38 @@ export const AdminStudents: React.FC = () => {
       // Fixed: Pass data in the correct format expected by updateStudent
       await updateStudent({ id: selectedStudent.id, data });
       console.log('Student updated successfully');
+      alertDialog.showAlert('Success', 'Student updated successfully', 'success');
       setShowEditModal(false);
       reset();
       setSelectedStudent(null);
       // If you need to refresh data, you might need to add a manual refresh or use a different approach
     } catch (error) {
       console.error('Error updating student:', error);
+      alertDialog.showAlert('Error', 'Failed to update student. Please try again.', 'error');
     }
   };
 
   const handleDeleteStudent = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this student?')) return;
-    
-    console.log('Deleting student:', id);
-    try {
-      await deleteStudent(id);
-      console.log('Student deleted successfully');
-      // If you need to refresh data, you might need to add a manual refresh or use a different approach
-    } catch (error) {
-      console.error('Error deleting student:', error);
-    }
+    alertDialog.showConfirm(
+      'Delete Student',
+      'Are you sure you want to delete this student? This action cannot be undone.',
+      async () => {
+        console.log('Deleting student:', id);
+        try {
+          await deleteStudent(id);
+          console.log('Student deleted successfully');
+          alertDialog.showAlert('Success', 'Student deleted successfully', 'success');
+          // If you need to refresh data, you might need to add a manual refresh or use a different approach
+        } catch (error) {
+          console.error('Error deleting student:', error);
+          alertDialog.showAlert('Error', 'Failed to delete student. Please try again.', 'error');
+        }
+      },
+      undefined,
+      'warning',
+      'Delete',
+      'Cancel'
+    );
   };
 
   const handleEditClick = (student: User) => {
@@ -210,11 +229,13 @@ export const AdminStudents: React.FC = () => {
     try {
       await bulkUpload(bulkFile);
       console.log('Bulk upload successful');
+      alertDialog.showAlert('Success', 'Bulk upload completed successfully', 'success');
       setShowBulkUploadModal(false);
       setBulkFile(null);
       // If you need to refresh data, you might need to add a manual refresh or use a different approach
     } catch (error) {
       console.error('Error in bulk upload:', error);
+      alertDialog.showAlert('Error', 'Failed to upload students. Please check your file format and try again.', 'error');
     }
   };
 
@@ -236,10 +257,10 @@ export const AdminStudents: React.FC = () => {
       const response = await fetch('/api/health');
       const data = await response.json();
       console.log('API test result:', data);
-      alert('API test successful! Check console for details.');
+      alertDialog.showAlert('API Test Successful', 'Check console for details.', 'success');
     } catch (error) {
       console.error('API test failed:', error);
-      alert('API test failed! Check console for details.');
+      alertDialog.showAlert('API Test Failed', 'Check console for details.', 'error');
     }
   };
 
@@ -865,6 +886,20 @@ export const AdminStudents: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* AlertDialog */}
+      <AlertDialog
+        open={alertDialog.open}
+        onOpenChange={alertDialog.onOpenChange}
+        title={alertDialog.title}
+        description={alertDialog.description}
+        type={alertDialog.type}
+        confirmText={alertDialog.confirmText}
+        cancelText={alertDialog.cancelText}
+        onConfirm={alertDialog.onConfirm}
+        onCancel={alertDialog.onCancel}
+        showCancel={alertDialog.showCancel}
+      />
     </div>
   );
 };

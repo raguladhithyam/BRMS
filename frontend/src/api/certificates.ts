@@ -37,11 +37,7 @@ export const generateCertificate = async (certificateId: string): Promise<ApiRes
   return response.data;
 };
 
-// Approve and generate certificate in one step (admin)
-export const approveAndGenerateCertificate = async (certificateId: string): Promise<ApiResponse<{ certificate: Certificate; downloadUrl: string }>> => {
-  const response = await api.post(`/admin/certificates/${certificateId}/approve-and-generate`);
-  return response.data;
-};
+
 
 // Get certificate by ID
 export const getCertificateById = async (certificateId: string): Promise<ApiResponse<Certificate>> => {

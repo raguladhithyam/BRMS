@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart, Clock, CheckCircle, AlertCircle, Calendar, MapPin, Phone, AlertTriangle, Award } from 'lucide-react';
 import { Card } from '../../components/shared/Card';
 import { Button } from '../../components/shared/Button';
 import { Badge } from '../../components/shared/Badge';
 import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { EmptyState } from '../../components/shared/EmptyState';
+import { DonationCompletionModal } from '../../components/shared/DonationCompletionModal';
 import { useAuth } from '../../hooks/useAuth';
 import { useStudentRequests } from '../../hooks/useRequests';
 import { useCertificates } from '../../hooks/useCertificates';
@@ -14,16 +15,42 @@ export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
   const { matchingRequests, optIns, isLoading, optIn, isOptingIn } = useStudentRequests();
   const { createCertificateRequest } = useCertificates();
+  const [showDonationModal, setShowDonationModal] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOptIn = (requestId: string) => {
     optIn(requestId);
   };
 
-  const handleDonationCompleted = async (requestId: string) => {
+  const handleDonationCompleted = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setShowDonationModal(true);
+  };
+
+  const handleDonationSubmit = async (geotagPhoto: string) => {
+    if (!selectedRequestId) return;
+    
+    setIsSubmitting(true);
     try {
-      await createCertificateRequest(requestId);
+      // First complete the donation with geotag photo
+      await fetch(`${import.meta.env.VITE_API_URL}/admin/requests/${selectedRequestId}/complete-donation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ geotagPhoto }),
+      });
+
+      // Then create certificate request
+      await createCertificateRequest(selectedRequestId);
+      setShowDonationModal(false);
+      setSelectedRequestId(null);
     } catch (error) {
-      console.error('Create certificate request error:', error);
+      console.error('Complete donation error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -297,6 +324,17 @@ export const StudentDashboard: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Donation Completion Modal */}
+      <DonationCompletionModal
+        isOpen={showDonationModal}
+        onClose={() => {
+          setShowDonationModal(false);
+          setSelectedRequestId(null);
+        }}
+        onSubmit={handleDonationSubmit}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 };

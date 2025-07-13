@@ -16,6 +16,8 @@ import { Badge } from '@/components/shared/Badge';
 import { Modal } from '@/components/shared/Modal';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
+import AlertDialog from '@/components/shared/AlertDialog';
+import { useAlertDialog } from '@/hooks/useAlertDialog';
 import { useAdmins } from '@/hooks/useAdmins';
 import { User } from '@/types';
 import { useForm } from 'react-hook-form';
@@ -40,6 +42,9 @@ export const AdminManagement: React.FC = () => {
   const [filters, setFilters] = useState({
     search: '',
   });
+  
+  // AlertDialog hook
+  const alertDialog = useAlertDialog();
 
   const { 
     admins, 
@@ -75,10 +80,12 @@ export const AdminManagement: React.FC = () => {
   const handleAddAdmin = async (data: AdminFormData) => {
     try {
       await createAdmin(data);
+      alertDialog.showAlert('Success', 'Admin added successfully', 'success');
       setShowAddModal(false);
       reset();
     } catch (error) {
       console.error('Error adding admin:', error);
+      alertDialog.showAlert('Error', 'Failed to add admin. Please try again.', 'error');
     }
   };
 
@@ -87,21 +94,25 @@ export const AdminManagement: React.FC = () => {
     
     try {
       await updateAdmin({ id: selectedAdmin.id, data });
+      alertDialog.showAlert('Success', 'Admin updated successfully', 'success');
       setShowEditModal(false);
       reset();
       setSelectedAdmin(null);
     } catch (error) {
       console.error('Error updating admin:', error);
+      alertDialog.showAlert('Error', 'Failed to update admin. Please try again.', 'error');
     }
   };
 
   const handleDeleteAdmin = async (id: string) => {
     try {
       await deleteAdmin(id);
+      alertDialog.showAlert('Success', 'Admin deleted successfully', 'success');
       setShowDeleteModal(false);
       setSelectedAdmin(null);
     } catch (error) {
       console.error('Error deleting admin:', error);
+      alertDialog.showAlert('Error', 'Failed to delete admin. Please try again.', 'error');
     }
   };
 
@@ -437,6 +448,20 @@ export const AdminManagement: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {/* AlertDialog */}
+      <AlertDialog
+        open={alertDialog.open}
+        onOpenChange={alertDialog.onOpenChange}
+        title={alertDialog.title}
+        description={alertDialog.description}
+        type={alertDialog.type}
+        confirmText={alertDialog.confirmText}
+        cancelText={alertDialog.cancelText}
+        onConfirm={alertDialog.onConfirm}
+        onCancel={alertDialog.onCancel}
+        showCancel={alertDialog.showCancel}
+      />
     </div>
   );
 }; 
