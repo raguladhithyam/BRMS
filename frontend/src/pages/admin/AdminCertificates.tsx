@@ -12,17 +12,17 @@ import {
   MapPin,
   Heart
 } from 'lucide-react';
-import { Card } from '../../components/shared/Card';
-import { Button } from '../../components/shared/Button';
-import { Input } from '../../components/shared/Input';
-import Select from '../../components/shared/Select';
-import { Badge } from '../../components/shared/Badge';
-import { Modal } from '../../components/shared/Modal';
-import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
-import { EmptyState } from '../../components/shared/EmptyState';
-import { useAdminCertificates } from '../../hooks/useCertificates';
-import { Certificate } from '../../types';
-import { cn } from '../../utils/cn';
+import { Card } from '@/components/shared/Card';
+import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/Input';
+import Select from '@/components/shared/Select';
+import { Badge } from '@/components/shared/Badge';
+import { Modal } from '@/components/shared/Modal';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useAdminCertificates } from '@/hooks/useCertificates';
+import { Certificate } from '@/types';
+import { cn } from '@/utils/cn';
 import { format } from 'date-fns';
 
 export const AdminCertificates: React.FC = () => {
@@ -40,9 +40,11 @@ export const AdminCertificates: React.FC = () => {
     isLoading, 
     approveCertificate, 
     generateCertificate,
+    approveAndGenerateCertificate,
     downloadCertificate,
     isApproving,
-    isGenerating
+    isGenerating,
+    isApprovingAndGenerating
   } = useAdminCertificates();
 
   const currentCertificates = activeTab === 'pending' ? pendingCertificates : allCertificates;
@@ -77,6 +79,14 @@ export const AdminCertificates: React.FC = () => {
       await generateCertificate(certificateId);
     } catch (error) {
       console.error('Generate certificate error:', error);
+    }
+  };
+
+  const handleApproveAndGenerate = async (certificateId: string) => {
+    try {
+      await approveAndGenerateCertificate(certificateId);
+    } catch (error) {
+      console.error('Approve and generate certificate error:', error);
     }
   };
 
@@ -257,26 +267,41 @@ export const AdminCertificates: React.FC = () => {
                       </Button>
                       
                       {certificate.status === 'pending' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleApprove(certificate.id)}
-                          loading={isApproving}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleApprove(certificate.id)}
+                            loading={isApproving}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleApproveAndGenerate(certificate.id)}
+                            loading={isApprovingAndGenerating}
+                            className="text-purple-600 hover:text-purple-700"
+                          >
+                            <Award className="h-4 w-4 mr-1" />
+                            Approve & Generate
+                          </Button>
+                        </div>
                       )}
                       
                       {certificate.status === 'approved' && (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleGenerate(certificate.id)}
                           loading={isGenerating}
                           className="text-blue-600 hover:text-blue-700"
                         >
-                          <Award className="h-4 w-4" />
+                          <Award className="h-4 w-4 mr-1" />
+                          Generate
                         </Button>
                       )}
                       

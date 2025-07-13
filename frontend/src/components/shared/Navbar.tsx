@@ -37,6 +37,7 @@ export const Navbar: React.FC = () => {
     { path: '/admin/students', icon: Users, label: 'Students' },
     { path: '/admin/certificates', icon: Award, label: 'Certificates' },
     { path: '/admin/logs', icon: Activity, label: 'Logs' },
+    { path: '/admin/management', icon: Users, label: 'Management' },
   ];
 
   const studentNavItems = [

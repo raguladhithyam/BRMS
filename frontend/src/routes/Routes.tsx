@@ -1,30 +1,31 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Layout } from '../components/shared/Layout';
-import { ProtectedRoute } from '../components/shared/ProtectedRoute';
+import { Layout } from '@/components/shared/Layout';
+import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 
 // Public Pages
-import { LandingPage } from '../pages/public/LandingPage';
-import { BloodRequestForm } from '../pages/public/BloodRequestForm';
-import { LoginPage } from '../pages/auth/LoginPage';
-import { RegisterPage } from '../pages/auth/RegisterPage';
+import { LandingPage } from '@/pages/public/LandingPage';
+import { BloodRequestForm } from '@/pages/public/BloodRequestForm';
+import { LoginPage } from '@/pages/auth/LoginPage';
+import { RegisterPage } from '@/pages/auth/RegisterPage';
 
 // Admin Pages
-import { AdminDashboard } from '../pages/admin/AdminDashboard';
-import { AdminRequests } from '../pages/admin/AdminRequests';
-import { AdminStudents } from '../pages/admin/AdminStudents';
-import { AdminCertificates } from '../pages/admin/AdminCertificates';
-import AdminLogs from '../pages/admin/AdminLogs';
+import { AdminDashboard } from '@/pages/admin/AdminDashboard';
+import { AdminRequests } from '@/pages/admin/AdminRequests';
+import { AdminStudents } from '@/pages/admin/AdminStudents';
+import { AdminCertificates } from '@/pages/admin/AdminCertificates';
+import { AdminManagement } from '@/pages/admin/AdminManagement';
+import AdminLogs from '@/pages/admin/AdminLogs';
 
 // Student Pages
-import { StudentDashboard } from '../pages/student/StudentDashboard';
-import { StudentRequests } from '../pages/student/StudentRequests';
-import { StudentCertificates } from '../pages/student/StudentCertificates';
+import { StudentDashboard } from '@/pages/student/StudentDashboard';
+import { StudentRequests } from '@/pages/student/StudentRequests';
+import { StudentCertificates } from '@/pages/student/StudentCertificates';
 
 // Shared Pages
-import { NotificationsPage } from '../pages/shared/NotificationsPage';
-import { ProfilePage } from '../pages/shared/ProfilePage';
-import { UnauthorizedPage } from '../pages/shared/UnauthorizedPage';
+import { NotificationsPage } from '@/pages/shared/NotificationsPage';
+import { ProfilePage } from '@/pages/shared/ProfilePage';
+import { UnauthorizedPage } from '@/pages/shared/UnauthorizedPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -62,6 +63,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="admin/logs" element={
           <ProtectedRoute requiredRole="admin">
             <AdminLogs />
+          </ProtectedRoute>
+        } />
+        <Route path="admin/management" element={
+          <ProtectedRoute requiredRole="admin">
+            <AdminManagement />
           </ProtectedRoute>
         } />
 

@@ -218,7 +218,7 @@ export const BloodRequestForm: React.FC = () => {
                 type="tel"
                 {...register('phone')}
                 error={errors.phone?.message}
-                placeholder="+1 (555) 123-4567"
+                placeholder="+91 9952810338"
                 disabled={isFormDisabled}
                 required
               />
@@ -375,7 +375,7 @@ export const BloodRequestForm: React.FC = () => {
                 href="tel:+15551234567"
                 className="inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
               >
-                📞 +1 (555) 123-4567
+                📞 +91 9952810338
               </a>
             </div>
           </Card>

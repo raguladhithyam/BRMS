@@ -25,6 +25,8 @@ export interface BloodRequest {
   notes?: string;
   status: 'pending' | 'approved' | 'rejected' | 'fulfilled';
   urgency: 'low' | 'medium' | 'high' | 'critical';
+  assignedDonorId?: string;
+  geotagPhoto?: string;
   createdAt: string;
   updatedAt: string;
   assignedDonor?: User;

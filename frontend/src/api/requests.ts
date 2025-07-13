@@ -1,5 +1,5 @@
-import api from '../utils/api';
-import { BloodRequest, PaginatedResponse, ApiResponse } from '../types';
+import api from '@/utils/api';
+import { BloodRequest, PaginatedResponse, ApiResponse } from '@/types';
 
 export const requestsApi = {
   // Public API - Create blood request
@@ -49,6 +49,21 @@ export const requestsApi = {
   fulfill: async (id: string, donorId: string): Promise<BloodRequest> => {
     const response = await api.post(`/admin/requests/${id}/fulfill`, { donorId });
     return response.data.data;
+  },
+
+  updateAssignedDonor: async (requestId: string, donorId: string): Promise<BloodRequest> => {
+    const response = await api.put(`/admin/requests/${requestId}/assign-donor`, { donorId });
+    return response.data.data;
+  },
+
+  completeDonation: async (requestId: string, geotagPhoto: string): Promise<BloodRequest> => {
+    const response = await api.post(`/admin/requests/${requestId}/complete-donation`, { geotagPhoto });
+    return response.data.data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const response = await api.delete(`/admin/requests/${id}`);
+    return response.data;
   },
 
   // Student APIs

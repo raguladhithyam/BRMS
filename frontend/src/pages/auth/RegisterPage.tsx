@@ -120,7 +120,7 @@ export const RegisterPage: React.FC = () => {
               type="tel"
               {...register('phone')}
               error={errors.phone?.message}
-              placeholder="+1 (555) 123-4567"
+              placeholder="+91 9952810338"
               required
             />
 

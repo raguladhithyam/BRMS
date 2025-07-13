@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Certificate } from '../types';
-import * as certificateApi from '../api/certificates';
+import { Certificate } from '@/types';
+import * as certificateApi from '@/api/certificates';
 import toast from 'react-hot-toast';
 
 export const useCertificates = () => {
@@ -85,6 +85,7 @@ export const useAdminCertificates = () => {
   const [error, setError] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isApprovingAndGenerating, setIsApprovingAndGenerating] = useState(false);
 
   const fetchCertificates = async () => {
     setIsLoading(true);
@@ -168,6 +169,31 @@ export const useAdminCertificates = () => {
     }
   };
 
+  const approveAndGenerateCertificate = async (certificateId: string) => {
+    setIsApprovingAndGenerating(true);
+    try {
+      const response = await certificateApi.approveAndGenerateCertificate(certificateId);
+      // Update the certificate in both lists
+      setPendingCertificates(prev => 
+        prev.map(cert => 
+          cert.id === certificateId ? response.data.certificate : cert
+        )
+      );
+      setAllCertificates(prev => 
+        prev.map(cert => 
+          cert.id === certificateId ? response.data.certificate : cert
+        )
+      );
+      toast.success('Certificate approved and generated successfully');
+      return response.data;
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to approve and generate certificate');
+      throw err;
+    } finally {
+      setIsApprovingAndGenerating(false);
+    }
+  };
+
   const downloadCertificate = async (certificateId: string) => {
     try {
       const blob = await certificateApi.downloadCertificate(certificateId);
@@ -198,8 +224,10 @@ export const useAdminCertificates = () => {
     fetchCertificates,
     approveCertificate,
     generateCertificate,
+    approveAndGenerateCertificate,
     downloadCertificate,
     isApproving,
     isGenerating,
+    isApprovingAndGenerating,
   };
 }; 

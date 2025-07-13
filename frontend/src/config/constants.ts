@@ -23,6 +23,7 @@ export const QUERY_KEYS = {
   USER: 'user',
   BLOOD_REQUESTS: 'bloodRequests',
   STUDENTS: 'students',
+  ADMINS: 'admins',
   NOTIFICATIONS: 'notifications',
   DASHBOARD_STATS: 'dashboardStats',
   BLOOD_GROUP_STATS: 'bloodGroupStats',

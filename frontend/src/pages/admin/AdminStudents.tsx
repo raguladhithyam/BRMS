@@ -11,19 +11,20 @@ import {
   Mail,
   Phone
 } from 'lucide-react';
-import { Card } from '../../components/shared/Card';
-import { Button } from '../../components/shared/Button';
-import { Input } from '../../components/shared/Input';
-import { Badge } from '../../components/shared/Badge';
-import { Modal } from '../../components/shared/Modal';
-import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
-import { EmptyState } from '../../components/shared/EmptyState';
-import { useStudents } from '../../hooks/useStudents';
-import { User } from '../../types';
-import { BLOOD_GROUPS } from '../../config/constants';
+import { Card } from '@/components/shared/Card';
+import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/Input';
+import { Badge } from '@/components/shared/Badge';
+import { Modal } from '@/components/shared/Modal';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useStudents } from '@/hooks/useStudents';
+import { User } from '@/types';
+import { BLOOD_GROUPS } from '@/config/constants';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { cn } from '@/utils/cn';
 
 const studentSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -43,6 +44,7 @@ export const AdminStudents: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [bulkFile, setBulkFile] = useState<File | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'opted' | 'assigned'>('all');
   
   // Separate local filters from API filters
   const [localFilters, setLocalFilters] = useState({
@@ -350,6 +352,47 @@ export const AdminStudents: React.FC = () => {
             <Plus className="h-4 w-4 mr-2" />
             Add Student
           </Button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={cn(
+                'py-2 px-1 border-b-2 font-medium text-sm',
+                activeTab === 'all'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              )}
+            >
+              All Students ({filteredStudents.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('opted')}
+              className={cn(
+                'py-2 px-1 border-b-2 font-medium text-sm',
+                activeTab === 'opted'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              )}
+            >
+              Opted Donors
+            </button>
+            <button
+              onClick={() => setActiveTab('assigned')}
+              className={cn(
+                'py-2 px-1 border-b-2 font-medium text-sm',
+                activeTab === 'assigned'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              )}
+            >
+              Assigned Donors
+            </button>
+          </nav>
         </div>
       </div>
 

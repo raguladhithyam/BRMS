@@ -10,28 +10,33 @@ import {
   Mail,
   Calendar,
   Heart,
-  Users
+  Users,
+  Trash2,
+  Camera
 } from 'lucide-react';
-import { Card } from '../../components/shared/Card';
-import { Button } from '../../components/shared/Button';
-import { Input } from '../../components/shared/Input';
-import Select from '../../components/shared/Select';
-import { Badge } from '../../components/shared/Badge';
-import { Modal } from '../../components/shared/Modal';
-import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
-import { EmptyState } from '../../components/shared/EmptyState';
-import { useAdminRequests } from '../../hooks/useRequests';
-// import { useStudents } from '../../hooks/useStudents';
-import { BloodRequest } from '../../types';
-import { REQUEST_STATUS, URGENCY_LEVELS, BLOOD_GROUPS } from '../../config/constants';
-import { cn } from '../../utils/cn';
+import { Card } from '@/components/shared/Card';
+import { Button } from '@/components/shared/Button';
+import { Input } from '@/components/shared/Input';
+import Select from '@/components/shared/Select';
+import { Badge } from '@/components/shared/Badge';
+import { Modal } from '@/components/shared/Modal';
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { useAdminRequests } from '@/hooks/useRequests';
+// import { useStudents } from '@/hooks/useStudents';
+import { BloodRequest } from '@/types';
+import { REQUEST_STATUS, URGENCY_LEVELS, BLOOD_GROUPS } from '@/config/constants';
+import { cn } from '@/utils/cn';
 import { format } from 'date-fns';
 
 export const AdminRequests: React.FC = () => {
   const [selectedRequest, setSelectedRequest] = useState<BloodRequest | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showFulfillModal, setShowFulfillModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCompleteDonationModal, setShowCompleteDonationModal] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState('');
+  const [geotagPhoto, setGeotagPhoto] = useState('');
   const [filters, setFilters] = useState({
     status: '',
     bloodGroup: '',
@@ -45,9 +50,13 @@ export const AdminRequests: React.FC = () => {
     approveRequest, 
     rejectRequest, 
     fulfillRequest,
+    completeDonation,
+    deleteRequest,
     isApproving,
     isRejecting,
-    isFulfilling
+    isFulfilling,
+    isCompletingDonation,
+    isDeleting
   } = useAdminRequests();
 
   // const { students } = useStudents({ availability: true });
@@ -106,6 +115,32 @@ export const AdminRequests: React.FC = () => {
       fulfillRequest({ id: selectedRequest.id, donorId: selectedDonor });
       setShowFulfillModal(false);
       setSelectedDonor('');
+    }
+  };
+
+  const handleDeleteRequest = (request: BloodRequest) => {
+    setSelectedRequest(request);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedRequest) {
+      deleteRequest(selectedRequest.id);
+      setShowDeleteModal(false);
+      setSelectedRequest(null);
+    }
+  };
+
+  const handleCompleteDonation = (request: BloodRequest) => {
+    setSelectedRequest(request);
+    setShowCompleteDonationModal(true);
+  };
+
+  const handleCompleteDonationSubmit = () => {
+    if (selectedRequest && geotagPhoto) {
+      completeDonation({ requestId: selectedRequest.id, geotagPhoto });
+      setShowCompleteDonationModal(false);
+      setGeotagPhoto('');
     }
   };
 
@@ -263,49 +298,79 @@ export const AdminRequests: React.FC = () => {
                       )}
                     </td>
                     
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewDetails(request)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      
-                      {request.status === 'pending' && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleApprove(request.id)}
-                            loading={isApproving}
-                            className="text-green-600 hover:text-green-700"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleReject(request.id)}
-                            loading={isRejecting}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <XCircle className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                      
-                      {request.status === 'approved' && request.optedInStudents && request.optedInStudents.length > 0 && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex flex-wrap gap-2">
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          onClick={() => handleFulfill(request)}
+                          onClick={() => handleViewDetails(request)}
                           className="text-blue-600 hover:text-blue-700"
                         >
-                          <Users className="h-4 w-4" />
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
                         </Button>
-                      )}
+                        
+                        {request.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleApprove(request.id)}
+                              loading={isApproving}
+                              className="text-green-600 hover:text-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReject(request.id)}
+                              loading={isRejecting}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        
+                        {request.status === 'approved' && request.optedInStudents && request.optedInStudents.length > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleFulfill(request)}
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Users className="h-4 w-4 mr-1" />
+                            Assign Donor
+                          </Button>
+                        )}
+
+                        {request.status === 'approved' && request.assignedDonorId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCompleteDonation(request)}
+                            className="text-purple-600 hover:text-purple-700"
+                          >
+                            <Camera className="h-4 w-4 mr-1" />
+                            Complete Donation
+                          </Button>
+                        )}
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteRequest(request)}
+                          loading={isDeleting}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -513,6 +578,87 @@ export const AdminRequests: React.FC = () => {
                 disabled={!selectedDonor}
               >
                 Assign Donor
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Complete Donation Modal */}
+      <Modal
+        isOpen={showCompleteDonationModal}
+        onClose={() => setShowCompleteDonationModal(false)}
+        title="Complete Donation"
+      >
+        {selectedRequest && (
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Please provide a geotag photo to complete the donation for {selectedRequest.requestorName}.
+            </p>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Geotag Photo URL
+              </label>
+              <Input
+                placeholder="Enter photo URL with location data"
+                value={geotagPhoto}
+                onChange={(e) => setGeotagPhoto(e.target.value)}
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Please provide a photo URL that includes location/geotag information
+              </p>
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCompleteDonationModal(false);
+                  setGeotagPhoto('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCompleteDonationSubmit}
+                loading={isCompletingDonation}
+                disabled={!geotagPhoto}
+              >
+                Complete Donation
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Request"
+      >
+        {selectedRequest && (
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Are you sure you want to delete the blood request for {selectedRequest.requestorName}?
+              This action cannot be undone.
+            </p>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleConfirmDelete}
+                loading={isDeleting}
+              >
+                Delete Request
               </Button>
             </div>
           </div>

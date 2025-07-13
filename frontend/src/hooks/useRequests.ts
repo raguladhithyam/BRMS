@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { requestsApi } from '../api/requests';
-import { QUERY_KEYS } from '../config/constants';
+import { requestsApi } from '@/api/requests';
+import { QUERY_KEYS } from '@/config/constants';
 import toast from 'react-hot-toast';
 
 export const useRequests = () => {
@@ -67,6 +67,41 @@ export const useAdminRequests = (params?: any) => {
     },
   });
 
+  const updateAssignedDonorMutation = useMutation({
+    mutationFn: ({ requestId, donorId }: { requestId: string; donorId: string }) =>
+      requestsApi.updateAssignedDonor(requestId, donorId),
+    onSuccess: () => {
+      toast.success('Assigned donor updated successfully!');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOOD_REQUESTS] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update assigned donor');
+    },
+  });
+
+  const completeDonationMutation = useMutation({
+    mutationFn: ({ requestId, geotagPhoto }: { requestId: string; geotagPhoto: string }) =>
+      requestsApi.completeDonation(requestId, geotagPhoto),
+    onSuccess: () => {
+      toast.success('Donation completed successfully!');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOOD_REQUESTS] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to complete donation');
+    },
+  });
+
+  const deleteRequestMutation = useMutation({
+    mutationFn: (id: string) => requestsApi.delete(id),
+    onSuccess: () => {
+      toast.success('Request deleted successfully!');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOOD_REQUESTS] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete request');
+    },
+  });
+
   return {
     requests,
     isLoading,
@@ -74,9 +109,15 @@ export const useAdminRequests = (params?: any) => {
     approveRequest: approveMutation.mutate,
     rejectRequest: rejectMutation.mutate,
     fulfillRequest: fulfillMutation.mutate,
+    updateAssignedDonor: updateAssignedDonorMutation.mutate,
+    completeDonation: completeDonationMutation.mutate,
+    deleteRequest: deleteRequestMutation.mutate,
     isApproving: approveMutation.isPending,
     isRejecting: rejectMutation.isPending,
     isFulfilling: fulfillMutation.isPending,
+    isUpdatingDonor: updateAssignedDonorMutation.isPending,
+    isCompletingDonation: completeDonationMutation.isPending,
+    isDeleting: deleteRequestMutation.isPending,
   };
 };
 

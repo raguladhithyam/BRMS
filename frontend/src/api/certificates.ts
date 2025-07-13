@@ -1,5 +1,5 @@
-import api from '../utils/api';
-import { Certificate, ApiResponse } from '../types';
+import api from '@/utils/api';
+import { Certificate, ApiResponse } from '@/types';
 
 // Create certificate request (student marks donation as completed)
 export const createCertificateRequest = async (requestId: string): Promise<ApiResponse<Certificate>> => {
@@ -34,6 +34,12 @@ export const approveCertificate = async (certificateId: string): Promise<ApiResp
 // Generate certificate PDF (admin)
 export const generateCertificate = async (certificateId: string): Promise<ApiResponse<{ certificate: Certificate; downloadUrl: string }>> => {
   const response = await api.post(`/certificates/admin/${certificateId}/generate`);
+  return response.data;
+};
+
+// Approve and generate certificate in one step (admin)
+export const approveAndGenerateCertificate = async (certificateId: string): Promise<ApiResponse<{ certificate: Certificate; downloadUrl: string }>> => {
+  const response = await api.post(`/admin/certificates/${certificateId}/approve-and-generate`);
   return response.data;
 };
 

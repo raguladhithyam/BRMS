@@ -270,7 +270,7 @@ Railway - Yug Fac Chrome
 For support and questions:
 - Create an issue in the repository
 - Email: support@bloodconnect.org
-- Emergency: +1 (555) 123-4567
+- Emergency: +91 9952810338
 
 ## 🙏 Acknowledgments
 

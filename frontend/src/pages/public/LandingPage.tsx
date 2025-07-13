@@ -189,11 +189,11 @@ export const LandingPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Phone className="h-5 w-5 text-primary-600" />
-                  <span>+1 (555) 123-4567</span>
+                  <span>+91 9952810338</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Mail className="h-5 w-5 text-primary-600" />
-                  <span>emergency@bloodconnect.org</span>
+                  <span>vbc@kct.ac.in</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <MapPin className="h-5 w-5 text-primary-600" />
@@ -264,8 +264,8 @@ export const LandingPage: React.FC = () => {
             <div>
               <h3 className="font-semibold mb-4">Contact</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>emergency@bloodconnect.org</li>
-                <li>+1 (555) 123-4567</li>
+                <li>vbc@kct.ac.in</li>
+                <li>+91 9952810338</li>
                 <li>Available 24/7</li>
               </ul>
             </div>

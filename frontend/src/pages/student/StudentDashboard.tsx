@@ -288,7 +288,7 @@ export const StudentDashboard: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center text-red-800">
                 <Phone className="h-4 w-4 mr-2" />
-                <span className="text-sm">+1 (555) 123-4567</span>
+                <span className="text-sm">+91 9952810338</span>
               </div>
               <p className="text-xs text-red-700">
                 Available 24/7 for critical blood requests

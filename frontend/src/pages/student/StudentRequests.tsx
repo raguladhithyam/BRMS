@@ -267,11 +267,11 @@ export const StudentRequests: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center text-red-800">
                 <Phone className="h-4 w-4 mr-2" />
-                <span className="text-sm font-medium">+1 (555) 123-4567</span>
+                <span className="text-sm font-medium">+91 9952810338</span>
               </div>
               <div className="flex items-center text-red-800">
                 <Mail className="h-4 w-4 mr-2" />
-                <span className="text-sm">emergency@bloodconnect.org</span>
+                <span className="text-sm">vbc@kct.ac.in</span>
               </div>
               <p className="text-xs text-red-700 mt-2">
                 Available 24/7 for critical blood requests and donor support
