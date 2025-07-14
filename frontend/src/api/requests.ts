@@ -56,8 +56,12 @@ export const requestsApi = {
     return response.data.data;
   },
 
-  completeDonation: async (requestId: string, geotagPhoto: string): Promise<BloodRequest> => {
-    const response = await api.post(`/admin/requests/${requestId}/complete-donation`, { geotagPhoto });
+  completeDonation: async (requestId: string, geotagPhoto: File): Promise<BloodRequest> => {
+    const formData = new FormData();
+    formData.append('geotagPhoto', geotagPhoto);
+    const response = await api.post(`/admin/requests/${requestId}/complete-donation`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data.data;
   },
 

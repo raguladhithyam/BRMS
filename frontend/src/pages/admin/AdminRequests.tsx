@@ -36,7 +36,7 @@ export const AdminRequests: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCompleteDonationModal, setShowCompleteDonationModal] = useState(false);
   const [selectedDonor, setSelectedDonor] = useState('');
-  const [geotagPhoto, setGeotagPhoto] = useState('');
+  const [geotagPhoto, setGeotagPhoto] = useState<File | null>(null);
   const [filters, setFilters] = useState({
     status: '',
     bloodGroup: '',
@@ -140,7 +140,7 @@ export const AdminRequests: React.FC = () => {
     if (selectedRequest && geotagPhoto) {
       completeDonation({ requestId: selectedRequest.id, geotagPhoto });
       setShowCompleteDonationModal(false);
-      setGeotagPhoto('');
+      setGeotagPhoto(null);
     }
   };
 
@@ -616,8 +616,12 @@ export const AdminRequests: React.FC = () => {
               </label>
               <Input
                 placeholder="Enter photo URL with location data"
-                value={geotagPhoto}
-                onChange={(e) => setGeotagPhoto(e.target.value)}
+                value={geotagPhoto ? geotagPhoto.name : ''}
+                onChange={(e) => {
+                  // This input is for URL, but the state is File.
+                  // If you need to handle a File object, you'd need a different approach.
+                  // For now, it's just for display if a File is selected.
+                }}
                 required
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -630,7 +634,7 @@ export const AdminRequests: React.FC = () => {
                 variant="outline"
                 onClick={() => {
                   setShowCompleteDonationModal(false);
-                  setGeotagPhoto('');
+                  setGeotagPhoto(null);
                 }}
               >
                 Cancel

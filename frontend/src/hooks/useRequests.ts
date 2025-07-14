@@ -80,7 +80,7 @@ export const useAdminRequests = (params?: any) => {
   });
 
   const completeDonationMutation = useMutation({
-    mutationFn: ({ requestId, geotagPhoto }: { requestId: string; geotagPhoto: string }) =>
+    mutationFn: ({ requestId, geotagPhoto }: { requestId: string; geotagPhoto: File }) =>
       requestsApi.completeDonation(requestId, geotagPhoto),
     onSuccess: () => {
       toast.success('Donation completed successfully!');

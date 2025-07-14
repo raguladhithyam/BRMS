@@ -7,7 +7,7 @@ import { Input } from './Input';
 interface DonationCompletionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (geotagPhoto: string) => void;
+  onSubmit: (geotagPhoto: File) => void;
   isLoading?: boolean;
 }
 
@@ -17,23 +17,23 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
   onSubmit,
   isLoading = false,
 }) => {
-  const [geotagPhoto, setGeotagPhoto] = useState('');
+  const [geotagPhoto, setGeotagPhoto] = useState<File | null>(null);
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!geotagPhoto.trim()) {
-      setError('Please provide a geotagged photo URL');
+    if (!geotagPhoto) {
+      setError('Please upload a geotagged photo');
       return;
     }
 
     setError('');
-    onSubmit(geotagPhoto.trim());
+    onSubmit(geotagPhoto);
   };
 
   const handleClose = () => {
-    setGeotagPhoto('');
+    setGeotagPhoto(null);
     setError('');
     onClose();
   };
@@ -77,20 +77,16 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
             </div>
 
             <label htmlFor="geotagPhoto" className="block text-sm font-medium text-gray-700 mb-2">
-              Geotagged Photo URL
+              Upload Geotagged Photo
             </label>
-            <div className="relative">
-              <Input
-                id="geotagPhoto"
-                type="url"
-                placeholder="https://drive.google.com/... or https://dropbox.com/..."
-                value={geotagPhoto}
-                onChange={(e) => setGeotagPhoto(e.target.value)}
-                className="pr-10"
-                required
-              />
-              <Upload className="h-4 w-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2" />
-            </div>
+            <input
+              id="geotagPhoto"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setGeotagPhoto(e.target.files?.[0] || null)}
+              className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
             {error && (
               <p className="mt-2 text-sm text-red-600 flex items-center">
                 <AlertCircle className="h-4 w-4 mr-1" />
@@ -111,7 +107,7 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
             <Button
               type="submit"
               loading={isLoading}
-              disabled={!geotagPhoto.trim()}
+              disabled={!geotagPhoto}
             >
               Complete Donation
             </Button>
