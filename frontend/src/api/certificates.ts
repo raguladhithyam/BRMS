@@ -47,7 +47,15 @@ export const getCertificateById = async (certificateId: string): Promise<ApiResp
 
 // Download certificate PDF
 export const downloadCertificate = async (certificateId: string): Promise<Blob> => {
-  const response = await api.get(`/certificates/${certificateId}/download`, {
+  // Check if user is admin by looking at the current URL or user role
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = user.role === 'admin';
+  
+  const endpoint = isAdmin 
+    ? `/certificates/admin/${certificateId}/download`
+    : `/certificates/${certificateId}/download`;
+    
+  const response = await api.get(endpoint, {
     responseType: 'blob',
   });
   return response.data;

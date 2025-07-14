@@ -617,7 +617,7 @@ export const AdminRequests: React.FC = () => {
               <Input
                 placeholder="Enter photo URL with location data"
                 value={geotagPhoto ? geotagPhoto.name : ''}
-                onChange={(e) => {
+                onChange={() => {
                   // This input is for URL, but the state is File.
                   // If you need to handle a File object, you'd need a different approach.
                   // For now, it's just for display if a File is selected.

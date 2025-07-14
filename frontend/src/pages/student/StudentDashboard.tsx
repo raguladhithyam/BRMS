@@ -28,19 +28,21 @@ export const StudentDashboard: React.FC = () => {
     setShowDonationModal(true);
   };
 
-  const handleDonationSubmit = async (geotagPhoto: string) => {
+  const handleDonationSubmit = async (geotagPhoto: File) => {
     if (!selectedRequestId) return;
     
     setIsSubmitting(true);
     try {
       // First complete the donation with geotag photo
+      const formData = new FormData();
+      formData.append('geotagPhoto', geotagPhoto);
+      
       await fetch(`${import.meta.env.VITE_API_URL}/admin/requests/${selectedRequestId}/complete-donation`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ geotagPhoto }),
+        body: formData,
       });
 
       // Then create certificate request

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Camera, Upload, X, AlertCircle } from 'lucide-react';
+import { Camera, X, AlertCircle } from 'lucide-react';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { Input } from './Input';
 
 interface DonationCompletionModalProps {
   isOpen: boolean;
