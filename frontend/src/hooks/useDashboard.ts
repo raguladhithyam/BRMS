@@ -19,3 +19,10 @@ export const useDashboard = () => {
     isLoading: isStatsLoading || isBloodGroupStatsLoading,
   };
 };
+
+export const useDonationStatistics = () => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.DONATION_STATISTICS],
+    queryFn: dashboardApi.getDonationStatistics,
+  });
+};

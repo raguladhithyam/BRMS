@@ -1,5 +1,5 @@
 import api from '../utils/api';
-import { DashboardStats, BloodGroupStats } from '../types';
+import { DashboardStats, BloodGroupStats, DonationStatistics } from '../types';
 
 export const dashboardApi = {
   getStats: async (): Promise<DashboardStats> => {
@@ -9,6 +9,11 @@ export const dashboardApi = {
 
   getBloodGroupStats: async (): Promise<BloodGroupStats[]> => {
     const response = await api.get('/admin/dashboard/blood-groups');
+    return response.data.data;
+  },
+
+  getDonationStatistics: async (): Promise<DonationStatistics> => {
+    const response = await api.get('/admin/dashboard/donation-stats');
     return response.data.data;
   },
 };

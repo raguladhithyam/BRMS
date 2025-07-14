@@ -1,16 +1,17 @@
 import React from 'react';
-import { Users, FileText, Clock, CheckCircle, AlertTriangle, Heart, TrendingUp } from 'lucide-react';
+import { Users, FileText, Clock, CheckCircle, AlertTriangle, Heart, TrendingUp, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // Add this import
 import { Card } from '../../components/shared/Card';
 import { Badge } from '../../components/shared/Badge';
 import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
-import { useDashboard } from '../../hooks/useDashboard';
+import { useDashboard, useDonationStatistics } from '../../hooks/useDashboard';
 import { useAdminRequests } from '../../hooks/useRequests';
 import { cn } from '../../utils/cn';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate(); // Add navigation hook
   const { stats, bloodGroupStats, isLoading } = useDashboard();
+  const { data: donationStats, isLoading: isDonationStatsLoading } = useDonationStatistics();
   const { requests } = useAdminRequests({ limit: 5, page: 1 });
 
   // Navigation handlers
@@ -22,7 +23,31 @@ export const AdminDashboard: React.FC = () => {
     navigate('/admin/students');
   };
 
-  if (isLoading) {
+  // Add this function to handle Excel report download
+  const handleDownloadReport = async () => {
+    try {
+      const response = await fetch('/api/admin/dashboard/donation-report', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to download report');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'donation-report.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      alert('Failed to download report.');
+    }
+  };
+
+  if (isLoading || isDonationStatsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -71,7 +96,7 @@ export const AdminDashboard: React.FC = () => {
         </p>
       </div>
 
-      {/* Stats Grid */}
+      {/* Donation Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {statCards.map((stat) => {
           const Icon = stat.icon;
@@ -95,6 +120,27 @@ export const AdminDashboard: React.FC = () => {
             </Card>
           );
         })}
+        {/* New Donation Statistics Card */}
+        <Card className="col-span-1 md:col-span-2 lg:col-span-4 bg-white border border-primary-200 shadow-sm">
+          <div className="flex flex-wrap justify-between items-center gap-6 p-4">
+            <div>
+              <p className="text-sm text-gray-600">Total Donations</p>
+              <p className="text-xl font-bold text-primary-700">{donationStats?.totalDonations ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Unique Donors</p>
+              <p className="text-xl font-bold text-primary-700">{donationStats?.totalUniqueDonors ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Total Requests</p>
+              <p className="text-xl font-bold text-primary-700">{donationStats?.totalRequests ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Units Donated</p>
+              <p className="text-xl font-bold text-primary-700">{donationStats?.totalUnitsDonated ?? 0}</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -232,7 +278,14 @@ export const AdminDashboard: React.FC = () => {
                   <span className="font-medium text-blue-700">Manage Donors</span>
                 </div>
               </button>
-            
+              {/* Download Excel Report Button */}
+              <button
+                onClick={handleDownloadReport}
+                className="w-full p-3 text-left bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center space-x-3"
+              >
+                <Download className="h-5 w-5 text-green-600" />
+                <span className="font-medium text-green-700">Download Donation Excel Report</span>
+              </button>
             </div>
           </Card>
         </div>

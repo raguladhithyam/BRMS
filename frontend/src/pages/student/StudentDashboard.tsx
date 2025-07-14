@@ -75,6 +75,11 @@ export const StudentDashboard: React.FC = () => {
     return nextDate ? new Date() >= nextDate : true;
   };
 
+  // Add this function to check if the user has already opted in to a request
+  const isOptedIn = (requestId: string) => {
+    return optIns?.some(optIn => optIn.request.id === requestId);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -206,6 +211,7 @@ export const StudentDashboard: React.FC = () => {
                           size="sm"
                           onClick={() => handleOptIn(request.id)}
                           loading={isOptingIn}
+                          disabled={isOptedIn(request.id) || request.status !== 'approved'}
                         >
                           Opt In to Help
                         </Button>

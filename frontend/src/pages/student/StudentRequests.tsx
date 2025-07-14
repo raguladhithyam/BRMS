@@ -122,7 +122,7 @@ export const StudentRequests: React.FC = () => {
                           size="sm"
                           onClick={() => handleOptIn(request.id)}
                           loading={isOptingIn}
-                          disabled={!user?.availability}
+                          disabled={!user?.availability || request.status !== 'approved'}
                         >
                           Opt In to Help
                         </Button>
@@ -387,7 +387,7 @@ export const StudentRequests: React.FC = () => {
                 Close
               </Button>
               
-              {!isOptedIn(selectedRequest.id) && user?.availability && (
+              {!isOptedIn(selectedRequest.id) && user?.availability && selectedRequest.status === 'approved' && (
                 <Button
                   onClick={() => {
                     handleOptIn(selectedRequest.id);

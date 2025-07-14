@@ -29,4 +29,5 @@ export const QUERY_KEYS = {
   BLOOD_GROUP_STATS: 'bloodGroupStats',
   MATCHING_REQUESTS: 'matchingRequests',
   OPT_INS: 'optIns',
+  DONATION_STATISTICS: 'donationStatistics',
 } as const;

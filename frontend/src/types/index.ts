@@ -121,3 +121,10 @@ export interface Certificate {
   donor?: User;
   request?: BloodRequest;
 }
+
+export interface DonationStatistics {
+  totalDonations: number;
+  totalUniqueDonors: number;
+  totalRequests: number;
+  totalUnitsDonated: number;
+}

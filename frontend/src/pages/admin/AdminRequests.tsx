@@ -507,6 +507,20 @@ export const AdminRequests: React.FC = () => {
               </div>
             )}
 
+            {/* Geotag/Donation Photo */}
+            {selectedRequest.geotagPhoto && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Donation Proof Photo</h3>
+                <a href={`/api/uploads/${selectedRequest.geotagPhoto}`} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={`/api/uploads/${selectedRequest.geotagPhoto}`}
+                    alt="Donation Proof"
+                    className="max-w-xs rounded border border-gray-300 shadow"
+                  />
+                </a>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex justify-end space-x-3 pt-4 border-t">
               {selectedRequest.status === 'pending' && (
