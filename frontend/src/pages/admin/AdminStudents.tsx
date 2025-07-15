@@ -264,6 +264,22 @@ export const AdminStudents: React.FC = () => {
     }
   };
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const allIds = filteredStudents.map(s => s.id);
+  const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.includes(id));
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds(ids => ids.filter(id => !allIds.includes(id)));
+    else setSelectedIds(ids => Array.from(new Set([...ids, ...allIds])));
+  };
+  const toggleSelect = (id: string) => {
+    setSelectedIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
+  };
+  const handleBulkDelete = () => {
+    allIds.filter(id => selectedIds.includes(id)).forEach(id => handleDeleteStudent(id));
+    setSelectedIds(ids => ids.filter(id => !allIds.includes(id)));
+  };
+
   // Show error state if there's an error
   if (error) {
     return (
@@ -478,11 +494,38 @@ export const AdminStudents: React.FC = () => {
 
       {/* Students List */}
       <Card padding={false}>
+        {/* Bulk action bar */}
+        {allIds.length > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleSelectAll}
+              className="mr-2 h-4 w-4 text-primary-600 border-gray-300 rounded"
+            />
+            <span className="text-sm text-gray-700 mr-4">Select All</span>
+            <Button size="sm" variant="outline" onClick={handleBulkDelete} disabled={selectedIds.length === 0}>
+              <Trash2 className="h-4 w-4 mr-1" /> Delete Selected
+            </Button>
+            {selectedIds.length > 0 && (
+              <span className="ml-2 text-xs text-gray-500">{selectedIds.length} selected</span>
+            )}
+          </div>
+        )}
+        {/* Table */}
         {filteredStudents && filteredStudents.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-2 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 text-primary-600 border-gray-300 rounded"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Student
                   </th>
@@ -503,6 +546,14 @@ export const AdminStudents: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-50">
+                    <td className="px-2 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(student.id)}
+                        onChange={() => toggleSelect(student.id)}
+                        className="h-4 w-4 text-primary-600 border-gray-300 rounded"
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">

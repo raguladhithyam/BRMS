@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { requestsApi } from '@/api/requests';
 import { QUERY_KEYS } from '@/config/constants';
 import toast from 'react-hot-toast';
+import { BloodRequest } from '@/types';
 
 export const useRequests = () => {
   const queryClient = useQueryClient();
@@ -102,6 +103,18 @@ export const useAdminRequests = (params?: any) => {
     },
   });
 
+  const updateRequestMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<BloodRequest> }) =>
+      requestsApi.update(id, data),
+    onSuccess: () => {
+      toast.success('Request updated successfully!');
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.BLOOD_REQUESTS] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update request');
+    },
+  });
+
   return {
     requests,
     isLoading,
@@ -112,6 +125,7 @@ export const useAdminRequests = (params?: any) => {
     updateAssignedDonor: updateAssignedDonorMutation.mutate,
     completeDonation: completeDonationMutation.mutate,
     deleteRequest: deleteRequestMutation.mutate,
+    updateRequest: updateRequestMutation.mutate,
     isApproving: approveMutation.isPending,
     isRejecting: rejectMutation.isPending,
     isFulfilling: fulfillMutation.isPending,

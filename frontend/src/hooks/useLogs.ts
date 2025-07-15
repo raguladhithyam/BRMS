@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { logsApi, SystemLog, LogStats, LogFilters } from '../api/logs';
+import { logsApi, LogFilters } from '../api/logs';
 import toast from 'react-hot-toast';
 
 export const useLogs = (autoRefresh = false, refreshInterval = 30000) => {
@@ -34,7 +34,7 @@ export const useLogs = (autoRefresh = false, refreshInterval = 30000) => {
   });
 
   const exportMutation = useMutation({
-    mutationFn: (exportFilters: LogFilters & { format?: 'json' | 'csv' }) =>
+    mutationFn: (exportFilters: LogFilters & { format?: 'json' | 'csv' | 'xlsx' }) =>
       logsApi.exportLogs(exportFilters),
     onSuccess: (data, variables) => {
       if (variables.format === 'csv') {
@@ -44,6 +44,18 @@ export const useLogs = (autoRefresh = false, refreshInterval = 30000) => {
         const a = document.createElement('a');
         a.href = url;
         a.download = `system-logs-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('Logs exported successfully!');
+      } else if (variables.format === 'xlsx') {
+        // Handle XLSX download
+        const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `system-logs-${new Date().toISOString().split('T')[0]}.xlsx`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -94,7 +106,7 @@ export const useLogs = (autoRefresh = false, refreshInterval = 30000) => {
     refetchStats();
   }, [refetchLogs, refetchStats]);
 
-  const exportLogs = useCallback((format: 'json' | 'csv' = 'json') => {
+  const exportLogs = useCallback((format: 'json' | 'csv' | 'xlsx' = 'json') => {
     exportMutation.mutate({ ...filters, format });
   }, [filters, exportMutation]);
 

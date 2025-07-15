@@ -36,6 +36,11 @@ export const requestsApi = {
     return response.data.data;
   },
 
+  update: async (id: string, data: Partial<BloodRequest>): Promise<BloodRequest> => {
+    const response = await api.put(`/admin/requests/${id}`, data);
+    return response.data.data;
+  },
+
   approve: async (id: string): Promise<BloodRequest> => {
     const response = await api.post(`/admin/requests/${id}/approve`);
     return response.data.data;

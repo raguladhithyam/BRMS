@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, X, AlertCircle } from 'lucide-react';
+import { Camera, X, AlertCircle, UploadCloud, CheckCircle } from 'lucide-react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 
@@ -18,15 +18,31 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
 }) => {
   const [geotagPhoto, setGeotagPhoto] = useState<File | null>(null);
   const [error, setError] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [isUploaded, setIsUploaded] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+
+  // Simulate upload (replace with real upload logic if needed)
+  const handleUpload = async () => {
+    if (!geotagPhoto) {
+      setError('Please select a file to upload');
+      return;
+    }
+    setError('');
+    setIsUploading(true);
+    // Simulate upload delay
+    await new Promise((res) => setTimeout(res, 1200));
+    setIsUploading(false);
+    setIsUploaded(true);
+    setUploadedImageUrl(URL.createObjectURL(geotagPhoto));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!geotagPhoto) {
-      setError('Please upload a geotagged photo');
+    if (!geotagPhoto || !isUploaded) {
+      setError('Please upload the geotagged photo first');
       return;
     }
-
     setError('');
     onSubmit(geotagPhoto);
   };
@@ -34,6 +50,9 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
   const handleClose = () => {
     setGeotagPhoto(null);
     setError('');
+    setIsUploading(false);
+    setIsUploaded(false);
+    setUploadedImageUrl(null);
     onClose();
   };
 
@@ -59,7 +78,6 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
               To complete your donation, please provide a geotagged photo as proof of your donation location. 
               This helps verify the donation process and maintain transparency.
             </p>
-            
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <div className="flex items-start">
                 <AlertCircle className="h-5 w-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
@@ -74,7 +92,6 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
                 </div>
               </div>
             </div>
-
             <label htmlFor="geotagPhoto" className="block text-sm font-medium text-gray-700 mb-2">
               Upload Geotagged Photo
             </label>
@@ -82,10 +99,32 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
               id="geotagPhoto"
               type="file"
               accept="image/*"
-              onChange={(e) => setGeotagPhoto(e.target.files?.[0] || null)}
+              onChange={(e) => {
+                setGeotagPhoto(e.target.files?.[0] || null);
+                setIsUploaded(false);
+              }}
               className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
+            <div className="flex items-center gap-2 mt-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleUpload}
+                loading={isUploading}
+                disabled={!geotagPhoto || isUploading || isUploaded}
+              >
+                <UploadCloud className="h-4 w-4 mr-1" />
+                {isUploaded ? 'Uploaded' : 'Upload File'}
+              </Button>
+              {isUploaded && <CheckCircle className="h-5 w-5 text-green-500" />}
+            </div>
+            {uploadedImageUrl && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-700 mb-1">Preview:</p>
+                <img src={uploadedImageUrl} alt="Uploaded" className="max-w-xs max-h-40 rounded border border-gray-300 shadow" />
+              </div>
+            )}
             {error && (
               <p className="mt-2 text-sm text-red-600 flex items-center">
                 <AlertCircle className="h-4 w-4 mr-1" />
@@ -93,20 +132,19 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
               </p>
             )}
           </div>
-
           <div className="flex justify-end space-x-3 pt-4 border-t">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
-              disabled={isLoading}
+              disabled={isLoading || isUploading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               loading={isLoading}
-              disabled={!geotagPhoto}
+              disabled={!geotagPhoto || !isUploaded || isUploading}
             >
               Complete Donation
             </Button>

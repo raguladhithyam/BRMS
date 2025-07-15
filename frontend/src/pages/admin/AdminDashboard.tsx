@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../../components/shared/LoadingSpinner';
 import { useDashboard, useDonationStatistics } from '../../hooks/useDashboard';
 import { useAdminRequests } from '../../hooks/useRequests';
 import { cn } from '../../utils/cn';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate(); // Add navigation hook
@@ -86,6 +87,32 @@ export const AdminDashboard: React.FC = () => {
     },
   ];
 
+  // Colors for charts
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28CF6', '#FF6699', '#FFB347', '#B6E880'];
+
+  // Fulfillment rate data
+  const fulfillmentData = [
+    { name: 'Pending', value: stats?.pendingRequests || 0 },
+    { name: 'Approved', value: stats?.approvedRequests || 0 },
+    { name: 'Total', value: stats?.totalRequests || 0 },
+  ];
+
+  // Blood group distribution
+  const bloodGroupData = (bloodGroupStats || []).map((group, idx) => ({
+    name: group.bloodGroup,
+    Available: group.availableStudents,
+    Requests: group.totalRequests,
+    fill: COLORS[idx % COLORS.length],
+  }));
+
+  // Donation summary (bar)
+  const donationSummary = [
+    { name: 'Total Donations', value: donationStats?.totalDonations || 0 },
+    { name: 'Unique Donors', value: donationStats?.totalUniqueDonors || 0 },
+    { name: 'Total Requests', value: donationStats?.totalRequests || 0 },
+    { name: 'Units Donated', value: donationStats?.totalUnitsDonated || 0 },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -120,26 +147,58 @@ export const AdminDashboard: React.FC = () => {
             </Card>
           );
         })}
-        {/* New Donation Statistics Card */}
-        <Card className="col-span-1 md:col-span-2 lg:col-span-4 bg-white border border-primary-200 shadow-sm">
-          <div className="flex flex-wrap justify-between items-center gap-6 p-4">
-            <div>
-              <p className="text-sm text-gray-600">Total Donations</p>
-              <p className="text-xl font-bold text-primary-700">{donationStats?.totalDonations ?? 0}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Unique Donors</p>
-              <p className="text-xl font-bold text-primary-700">{donationStats?.totalUniqueDonors ?? 0}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Requests</p>
-              <p className="text-xl font-bold text-primary-700">{donationStats?.totalRequests ?? 0}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Units Donated</p>
-              <p className="text-xl font-bold text-primary-700">{donationStats?.totalUnitsDonated ?? 0}</p>
-            </div>
-          </div>
+      </div>
+
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {/* Blood Group Distribution */}
+        <Card>
+          <h2 className="text-lg font-semibold mb-2">Blood Group Distribution</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={bloodGroupData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="Available" fill="#00C49F" />
+              <Bar dataKey="Requests" fill="#0088FE" />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+        {/* Fulfillment Rate */}
+        <Card>
+          <h2 className="text-lg font-semibold mb-2">Request Fulfillment</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <PieChart>
+              <Pie
+                data={fulfillmentData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={70}
+                label
+              >
+                {fulfillmentData.map((_, idx) => (
+                  <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </Card>
+        {/* Donation Summary */}
+        <Card>
+          <h2 className="text-lg font-semibold mb-2">Donation Summary</h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={donationSummary} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+              <XAxis dataKey="name" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="value" fill="#FF8042" />
+            </BarChart>
+          </ResponsiveContainer>
         </Card>
       </div>
 
@@ -202,8 +261,41 @@ export const AdminDashboard: React.FC = () => {
               )}
             </div>
           </Card>
+          {/* Quick Actions - moved here */}
+          <Card className="mt-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            
+            <div className="space-y-3">
+              <button 
+                onClick={handleReviewRequests}
+                className="w-full p-3 text-left bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <FileText className="h-5 w-5 text-primary-600" />
+                  <span className="font-medium text-primary-700">Review Pending Requests</span>
+                </div>
+              </button>
+              
+              <button 
+                onClick={handleManageDonors}
+                className="w-full p-3 text-left bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  <span className="font-medium text-blue-700">Manage Donors</span>
+                </div>
+              </button>
+              {/* Download Excel Report Button */}
+              <button
+                onClick={handleDownloadReport}
+                className="w-full p-3 text-left bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center space-x-3"
+              >
+                <Download className="h-5 w-5 text-green-600" />
+                <span className="font-medium text-green-700">Download Donation Excel Report</span>
+              </button>
+            </div>
+          </Card>
         </div>
-
         {/* Blood Group Statistics */}
         <div>
           <Card>
@@ -251,41 +343,6 @@ export const AdminDashboard: React.FC = () => {
                   <p>No blood group data available</p>
                 </div>
               )}
-            </div>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="mt-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            
-            <div className="space-y-3">
-              <button 
-                onClick={handleReviewRequests}
-                className="w-full p-3 text-left bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-primary-600" />
-                  <span className="font-medium text-primary-700">Review Pending Requests</span>
-                </div>
-              </button>
-              
-              <button 
-                onClick={handleManageDonors}
-                className="w-full p-3 text-left bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <Users className="h-5 w-5 text-blue-600" />
-                  <span className="font-medium text-blue-700">Manage Donors</span>
-                </div>
-              </button>
-              {/* Download Excel Report Button */}
-              <button
-                onClick={handleDownloadReport}
-                className="w-full p-3 text-left bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center space-x-3"
-              >
-                <Download className="h-5 w-5 text-green-600" />
-                <span className="font-medium text-green-700">Download Donation Excel Report</span>
-              </button>
             </div>
           </Card>
         </div>

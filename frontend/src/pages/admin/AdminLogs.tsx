@@ -11,10 +11,7 @@ import { format } from 'date-fns';
 import { 
   RefreshCw, 
   Download, 
-  Search, 
   Filter, 
-  Calendar,
-  User,
   Monitor,
   Clock,
   Activity
@@ -198,6 +195,15 @@ const AdminLogs: React.FC = () => {
             >
               <Download className="w-4 h-4 mr-2" />
               Export CSV
+            </Button>
+            <Button
+              onClick={() => exportLogs('xlsx')}
+              disabled={isExporting}
+              variant="secondary"
+              size="sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export Excel
             </Button>
           </div>
         </div>

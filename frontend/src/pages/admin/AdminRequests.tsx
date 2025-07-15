@@ -12,7 +12,8 @@ import {
   Heart,
   Users,
   Trash2,
-  Camera
+  Camera,
+  Edit3
 } from 'lucide-react';
 import { Card } from '@/components/shared/Card';
 import { Button } from '@/components/shared/Button';
@@ -43,6 +44,13 @@ export const AdminRequests: React.FC = () => {
     urgency: '',
     search: '',
   });
+  const [showDonorModal, setShowDonorModal] = useState(false);
+  const [donorActionType, setDonorActionType] = useState<'assign' | 'change'>('assign');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState<any>(null);
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { 
     requests, 
@@ -52,11 +60,14 @@ export const AdminRequests: React.FC = () => {
     fulfillRequest,
     completeDonation,
     deleteRequest,
+    updateRequest,
     isApproving,
     isRejecting,
     isFulfilling,
     isCompletingDonation,
-    isDeleting
+    isDeleting,
+    updateAssignedDonor,
+    isUpdatingDonor
   } = useAdminRequests();
 
   // const { students } = useStudents({ availability: true });
@@ -92,6 +103,25 @@ export const AdminRequests: React.FC = () => {
     });
   }, [uniqueRequests, filters]);
 
+  // Helper: only allow selection of pending requests
+  const pendingRequestIds = filteredRequests.filter(r => r.status === 'pending').map(r => r.id);
+  const allSelected = pendingRequestIds.length > 0 && pendingRequestIds.every(id => selectedIds.includes(id));
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds(ids => ids.filter(id => !pendingRequestIds.includes(id)));
+    else setSelectedIds(ids => Array.from(new Set([...ids, ...pendingRequestIds])));
+  };
+  const toggleSelect = (id: string) => {
+    setSelectedIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
+  };
+  const handleBulkApprove = () => {
+    pendingRequestIds.filter(id => selectedIds.includes(id)).forEach(id => approveRequest(id));
+    setSelectedIds(ids => ids.filter(id => !pendingRequestIds.includes(id)));
+  };
+  const handleBulkReject = () => {
+    pendingRequestIds.filter(id => selectedIds.includes(id)).forEach(id => rejectRequest({ id, reason: 'Bulk rejected by admin' }));
+    setSelectedIds(ids => ids.filter(id => !pendingRequestIds.includes(id)));
+  };
+
   const handleViewDetails = (request: BloodRequest) => {
     setSelectedRequest(request);
     setShowDetailsModal(true);
@@ -105,10 +135,10 @@ export const AdminRequests: React.FC = () => {
     rejectRequest({ id, reason: 'Request did not meet criteria' });
   };
 
-  const handleFulfill = (request: BloodRequest) => {
-    setSelectedRequest(request);
-    setShowFulfillModal(true);
-  };
+  // const handleFulfill = (request: BloodRequest) => {
+  //   setSelectedRequest(request);
+  //   setShowFulfillModal(true);
+  // };
 
   const handleFulfillSubmit = () => {
     if (selectedRequest && selectedDonor) {
@@ -144,6 +174,19 @@ export const AdminRequests: React.FC = () => {
     }
   };
 
+  const handleEdit = (request: BloodRequest) => {
+    setEditForm({ ...request });
+    setShowEditModal(true);
+  };
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setEditForm((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateRequest({ id: editForm.id, data: editForm });
+    setShowEditModal(false);
+  };
+
   const getStatusColor = (status: string) => {
     const statusConfig = REQUEST_STATUS.find(s => s.value === status);
     return statusConfig?.color || 'bg-gray-100 text-gray-800';
@@ -152,6 +195,14 @@ export const AdminRequests: React.FC = () => {
   const getUrgencyColor = (urgency: string) => {
     const urgencyConfig = URGENCY_LEVELS.find(u => u.value === urgency);
     return urgencyConfig?.color || 'bg-gray-100 text-gray-800';
+  };
+
+  // Update: Only allow donor change if more than 3 hours before request date/time
+  const isFutureRequest = (dateTime: string) => {
+    const requestTime = new Date(dateTime).getTime();
+    const now = Date.now();
+    const threeHoursMs = 3 * 60 * 60 * 1000;
+    return requestTime - now > threeHoursMs;
   };
 
   if (isLoading) {
@@ -230,11 +281,41 @@ export const AdminRequests: React.FC = () => {
 
       {/* Requests List */}
       <Card padding={false}>
+        {/* Bulk action bar */}
+        {pendingRequestIds.length > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleSelectAll}
+              className="mr-2 h-4 w-4 text-primary-600 border-gray-300 rounded"
+            />
+            <span className="text-sm text-gray-700 mr-4">Select All Pending</span>
+            <Button size="sm" variant="outline" onClick={handleBulkApprove} disabled={selectedIds.length === 0}>
+              <CheckCircle className="h-4 w-4 mr-1" /> Approve Selected
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleBulkReject} disabled={selectedIds.length === 0}>
+              <XCircle className="h-4 w-4 mr-1" /> Reject Selected
+            </Button>
+            {selectedIds.length > 0 && (
+              <span className="ml-2 text-xs text-gray-500">{selectedIds.length} selected</span>
+            )}
+          </div>
+        )}
+        {/* Table */}
         {filteredRequests.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-2 py-3">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      className="h-4 w-4 text-primary-600 border-gray-300 rounded"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Requestor
                   </th>
@@ -255,6 +336,16 @@ export const AdminRequests: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredRequests.map((request) => (
                   <tr key={request.id} className="hover:bg-gray-50">
+                    <td className="px-2 py-4">
+                      {request.status === 'pending' && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(request.id)}
+                          onChange={() => toggleSelect(request.id)}
+                          className="h-4 w-4 text-primary-600 border-gray-300 rounded"
+                        />
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
@@ -336,15 +427,36 @@ export const AdminRequests: React.FC = () => {
                           </>
                         )}
                         
-                        {request.status === 'approved' && request.optedInStudents && request.optedInStudents.length > 0 && (
+                        {request.status === 'approved' && !request.assignedDonorId && request.optedInStudents && request.optedInStudents.length > 0 && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleFulfill(request)}
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setDonorActionType('assign');
+                              setShowDonorModal(true);
+                            }}
                             className="text-blue-600 hover:text-blue-700"
+                            loading={isUpdatingDonor}
                           >
                             <Users className="h-4 w-4 mr-1" />
                             Assign Donor
+                          </Button>
+                        )}
+                        {request.status === 'approved' && request.assignedDonorId && isFutureRequest(request.dateTime) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setDonorActionType('change');
+                              setShowDonorModal(true);
+                            }}
+                            className="text-orange-600 hover:text-orange-700"
+                            loading={isUpdatingDonor}
+                          >
+                            <Users className="h-4 w-4 mr-1" />
+                            Change Assigned Donor
                           </Button>
                         )}
 
@@ -485,24 +597,55 @@ export const AdminRequests: React.FC = () => {
               </div>
             )}
 
+            {/* Assigned Donor */}
+            {selectedRequest.assignedDonor && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-blue-600" />
+                  Assigned Donor
+                </h3>
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-blue-900">{selectedRequest.assignedDonor.name}</p>
+                      <p className="text-sm text-blue-700">{selectedRequest.assignedDonor.email}</p>
+                      <p className="text-sm text-blue-600">Blood Group: {selectedRequest.assignedDonor.bloodGroup}</p>
+                    </div>
+                    <Badge variant="primary" className="bg-blue-600 text-white">
+                      Assigned
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Opted In Students */}
             {selectedRequest.optedInStudents && selectedRequest.optedInStudents.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                  <Heart className="h-5 w-5 mr-2 text-green-600" />
                   Opted In Donors ({selectedRequest.optedInStudents.length})
                 </h3>
-                <div className="space-y-2">
-                  {selectedRequest.optedInStudents.map((optIn) => (
-                    <div key={optIn.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{optIn.student.name}</p>
-                        <p className="text-sm text-gray-600">{optIn.student.email}</p>
+                <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-lg">
+                  <div className="space-y-2 p-2">
+                    {selectedRequest.optedInStudents.slice(0, 10).map((optIn) => (
+                      <div key={optIn.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div>
+                          <p className="font-medium text-green-900">{optIn.student.name}</p>
+                          <p className="text-sm text-green-700">{optIn.student.email}</p>
+                          <p className="text-sm text-green-600">Blood Group: {optIn.student.bloodGroup}</p>
+                        </div>
+                        <div className="text-sm text-green-600">
+                          Opted in: {format(new Date(optIn.optedAt), 'MMM dd, HH:mm')}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        Opted in: {format(new Date(optIn.optedAt), 'MMM dd, HH:mm')}
+                    ))}
+                    {selectedRequest.optedInStudents.length > 10 && (
+                      <div className="text-center py-2 text-sm text-gray-500 bg-gray-50 rounded-lg">
+                        +{selectedRequest.optedInStudents.length - 10} more opted in donors
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -680,6 +823,132 @@ export const AdminRequests: React.FC = () => {
               </Button>
             </div>
           </div>
+        )}
+      </Modal>
+
+      {/* Donor Assignment Modal */}
+      <Modal
+        isOpen={showDonorModal}
+        onClose={() => setShowDonorModal(false)}
+        title={donorActionType === 'assign' ? 'Assign Donor' : 'Change Assigned Donor'}
+        size="md"
+      >
+        {selectedRequest && (
+          <div>
+            <div className="mb-4">
+              <div className="font-medium mb-2">Select a donor from opted-in students:</div>
+              <select
+                className="w-full border rounded p-2"
+                value={selectedDonor}
+                onChange={e => setSelectedDonor(e.target.value)}
+              >
+                <option value="">Select Donor</option>
+                {selectedRequest.optedInStudents?.map(optIn => (
+                  <option key={optIn.student.id} value={optIn.student.id}>
+                    {optIn.student.name} ({optIn.student.email}) - {optIn.student.bloodGroup}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowDonorModal(false)}>Cancel</Button>
+              <Button
+                variant="primary"
+                loading={isFulfilling || isUpdatingDonor}
+                disabled={!selectedDonor}
+                onClick={() => {
+                  if (!selectedRequest || !selectedDonor) return;
+                  if (donorActionType === 'assign') {
+                    fulfillRequest({ id: selectedRequest.id, donorId: selectedDonor });
+                  } else {
+                    updateAssignedDonor({ requestId: selectedRequest.id, donorId: selectedDonor });
+                  }
+                  setShowDonorModal(false);
+                  setSelectedDonor('');
+                }}
+              >
+                {donorActionType === 'assign' ? 'Assign Donor' : 'Change Donor'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Blood Request"
+        size="lg"
+      >
+        {editForm && (
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                <input name="requestorName" value={editForm.requestorName} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input name="email" value={editForm.email} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Phone</label>
+                <input name="phone" value={editForm.phone} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Blood Group</label>
+                <select name="bloodGroup" value={editForm.bloodGroup} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" required>
+                  <option value="">Select</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Units</label>
+                <input name="units" type="number" min="1" max="10" value={editForm.units} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Date & Time</label>
+                <input name="dateTime" type="datetime-local" value={editForm.dateTime?.slice(0,16)} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Hospital Name</label>
+                <input name="hospitalName" value={editForm.hospitalName} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Location</label>
+                <input name="location" value={editForm.location} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Urgency</label>
+                <select name="urgency" value={editForm.urgency} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" required>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea name="notes" value={editForm.notes || ''} onChange={handleEditChange} className="mt-1 block w-full border rounded p-2" rows={2} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowEditModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary">
+                Save Changes
+              </Button>
+            </div>
+          </form>
         )}
       </Modal>
     </div>

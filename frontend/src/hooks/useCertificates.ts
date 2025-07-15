@@ -85,6 +85,7 @@ export const useAdminCertificates = () => {
   const [error, setError] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false); // <-- add isDeleting
 
   const fetchCertificates = async () => {
     setIsLoading(true);
@@ -168,7 +169,20 @@ export const useAdminCertificates = () => {
     }
   };
 
-
+  const deleteCertificate = async (certificateId: string) => {
+    setIsDeleting(true);
+    try {
+      await certificateApi.deleteCertificate(certificateId);
+      setPendingCertificates(prev => prev.filter(cert => cert.id !== certificateId));
+      setAllCertificates(prev => prev.filter(cert => cert.id !== certificateId));
+      toast.success('Certificate request deleted successfully');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete certificate request');
+      throw err;
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const downloadCertificate = async (certificateId: string) => {
     try {
@@ -203,5 +217,7 @@ export const useAdminCertificates = () => {
     downloadCertificate,
     isApproving,
     isGenerating,
+    deleteCertificate, // <-- add
+    isDeleting // <-- add
   };
 }; 

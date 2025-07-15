@@ -10,7 +10,8 @@ import {
   Users,
   Calendar,
   MapPin,
-  Heart
+  Heart,
+  Trash2
 } from 'lucide-react';
 import { Card } from '@/components/shared/Card';
 import { Button } from '@/components/shared/Button';
@@ -24,6 +25,7 @@ import { useAdminCertificates } from '@/hooks/useCertificates';
 import { Certificate } from '@/types';
 import { cn } from '@/utils/cn';
 import { format } from 'date-fns';
+import { API_BASE_URL } from '@/config/constants';
 
 export const AdminCertificates: React.FC = () => {
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
@@ -33,6 +35,7 @@ export const AdminCertificates: React.FC = () => {
     status: '',
     search: '',
   });
+  const [enlargedPhoto, setEnlargedPhoto] = useState<string | null>(null);
 
   const { 
     pendingCertificates, 
@@ -42,7 +45,9 @@ export const AdminCertificates: React.FC = () => {
     generateCertificate,
     downloadCertificate,
     isApproving,
-    isGenerating
+    isGenerating,
+    deleteCertificate,
+    isDeleting
   } = useAdminCertificates();
 
   const currentCertificates = activeTab === 'pending' ? pendingCertificates : allCertificates;
@@ -87,6 +92,15 @@ export const AdminCertificates: React.FC = () => {
       await downloadCertificate(certificateId);
     } catch (error) {
       console.error('Download certificate error:', error);
+    }
+  };
+
+  const handleDelete = async (certificateId: string) => {
+    if (!window.confirm('Are you sure you want to delete this certificate request?')) return;
+    try {
+      await deleteCertificate(certificateId);
+    } catch (error) {
+      console.error('Delete certificate error:', error);
     }
   };
 
@@ -299,6 +313,17 @@ export const AdminCertificates: React.FC = () => {
                           Download
                         </Button>
                       )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(certificate.id)}
+                        className="text-red-600 hover:text-red-700"
+                        title="Delete Certificate Request"
+                        disabled={isDeleting}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -416,19 +441,21 @@ export const AdminCertificates: React.FC = () => {
               </div>
             </div>
 
-            {/* Geotag/Donation Photo */}
-            {selectedCertificate.request?.geotagPhoto && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Donation Proof Photo</h3>
-                <a href={`/api/uploads/${selectedCertificate.request.geotagPhoto}`} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={`/api/uploads/${selectedCertificate.request.geotagPhoto}`}
-                    alt="Donation Proof"
-                    className="max-w-xs rounded border border-gray-300 shadow"
-                  />
-                </a>
-              </div>
-            )}
+            {/* Photo Block */}
+            <div className="border rounded p-4 bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Photo</h3>
+              {selectedCertificate.request?.geotagPhoto ? (
+                <img
+                  src={`${API_BASE_URL}/uploads/${selectedCertificate.request?.geotagPhoto}`}
+                  alt="Donation Proof"
+                  crossOrigin="anonymous"
+                  className="max-w-[120px] max-h-[120px] rounded border border-gray-300 shadow cursor-pointer hover:scale-105 transition-transform"
+                  onClick={() => setEnlargedPhoto(`${API_BASE_URL}/uploads/${selectedCertificate.request?.geotagPhoto}`)}
+                />
+              ) : (
+                <span className="text-gray-500">No photo uploaded.</span>
+              )}
+            </div>
 
             {/* Action Buttons */}
             <div className="flex justify-end space-x-3 pt-4 border-t">
@@ -473,6 +500,22 @@ export const AdminCertificates: React.FC = () => {
           </div>
         )}
       </Modal>
+      {/* Enlarged Photo Modal */}
+      {enlargedPhoto && (
+        <Modal
+          isOpen={!!enlargedPhoto}
+          onClose={() => setEnlargedPhoto(null)}
+          title="Donation Photo"
+          size="md"
+        >
+          <img
+            src={enlargedPhoto}
+            alt="Enlarged Donation Proof"
+            crossOrigin="anonymous"
+            className="max-w-full max-h-[70vh] mx-auto rounded border border-gray-300 shadow"
+          />
+        </Modal>
+      )}
     </div>
   );
 }; 

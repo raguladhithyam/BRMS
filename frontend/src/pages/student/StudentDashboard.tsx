@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Clock, CheckCircle, AlertCircle, Calendar, MapPin, Phone, AlertTriangle, Award } from 'lucide-react';
+import { Heart, Clock, CheckCircle, AlertCircle, Calendar, MapPin, Phone, AlertTriangle, Award, Download } from 'lucide-react';
 import { Card } from '../../components/shared/Card';
 import { Button } from '../../components/shared/Button';
 import { Badge } from '../../components/shared/Badge';
@@ -9,15 +9,20 @@ import { DonationCompletionModal } from '../../components/shared/DonationComplet
 import { useAuth } from '../../hooks/useAuth';
 import { useStudentRequests } from '../../hooks/useRequests';
 import { useCertificates } from '../../hooks/useCertificates';
+import { ProgressBar } from '../../components/shared/ProgressBar';
 import { format, addMonths } from 'date-fns';
+import { useQueryClient } from '@tanstack/react-query';
+import { API_BASE_URL } from '@/config/constants';
+import { getAuthToken } from '@/utils/auth';
 
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
   const { matchingRequests, optIns, isLoading, optIn, isOptingIn } = useStudentRequests();
-  const { createCertificateRequest } = useCertificates();
+  const { createCertificateRequest, certificates, downloadCertificate } = useCertificates();
   const [showDonationModal, setShowDonationModal] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleOptIn = (requestId: string) => {
     optIn(requestId);
@@ -37,16 +42,20 @@ export const StudentDashboard: React.FC = () => {
       const formData = new FormData();
       formData.append('geotagPhoto', geotagPhoto);
       
-      await fetch(`${import.meta.env.VITE_API_URL}/admin/requests/${selectedRequestId}/complete-donation`, {
+      await fetch(`${API_BASE_URL}/requests/${selectedRequestId}/complete-donation`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${getAuthToken()}`
+          // Do NOT set Content-Type for FormData
         },
         body: formData,
       });
 
       // Then create certificate request
       await createCertificateRequest(selectedRequestId);
+      // Refetch matching requests and opt-ins so the UI updates
+      await queryClient.invalidateQueries({ queryKey: ['matchingRequests'] });
+      await queryClient.invalidateQueries({ queryKey: ['optIns'] });
       setShowDonationModal(false);
       setSelectedRequestId(null);
     } catch (error) {
@@ -82,6 +91,46 @@ export const StudentDashboard: React.FC = () => {
     return optIns?.some(optIn => optIn.request.id === requestId);
   };
 
+  // Add this function to check if the user is the assigned donor for a request
+  const isAssignedDonor = (request: any) => {
+    return user && request.assignedDonorId && request.assignedDonorId === user.id;
+  };
+
+  const nextDonationDate = getNextDonationDate();
+  const eligible = isEligibleForDonation();
+
+  // Timeline data: combine opt-ins and certificates
+  type TimelineEvent =
+    | { type: 'Opt-in'; date: Date; details: string; request: any; id: string }
+    | { type: 'Certificate'; date: Date; details: string; certificate: any; id: string };
+  const timelineEvents: TimelineEvent[] = [
+    ...((optIns || []).map(optIn => ({
+      type: 'Opt-in' as const,
+      date: new Date(optIn.optedAt),
+      details: `Opted in for request at ${optIn.request.hospitalName}`,
+      request: optIn.request,
+      id: `optin-${optIn.id}`,
+    }))),
+    ...((certificates || []).map(cert => ({
+      type: 'Certificate' as const,
+      date: new Date(cert.donationDate),
+      details: `Donation completed at ${cert.hospitalName}`,
+      certificate: cert,
+      id: `cert-${cert.id}`,
+    }))),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  // Eligibility countdown visual
+  let daysLeft = 0;
+  if (!eligible && nextDonationDate && user?.lastDonationDate) {
+    const now = new Date();
+    const last = new Date(user.lastDonationDate);
+    const total = Math.round((nextDonationDate.getTime() - last.getTime()) / (1000 * 60 * 60 * 24));
+    console.log(total);
+    const left = Math.max(0, Math.round((nextDonationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    daysLeft = left;
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -89,9 +138,6 @@ export const StudentDashboard: React.FC = () => {
       </div>
     );
   }
-
-  const nextDonationDate = getNextDonationDate();
-  const eligible = isEligibleForDonation();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -146,13 +192,54 @@ export const StudentDashboard: React.FC = () => {
             <div>
               <h3 className="font-medium text-yellow-900">Donation Eligibility</h3>
               <p className="text-sm text-yellow-800">
-                For your health and safety, you must wait 3 months between blood donations. 
-                You'll be automatically eligible again on {nextDonationDate && format(nextDonationDate, 'MMMM dd, yyyy')}.
+                For your health and safety, you must wait 3 months between blood donations.<br />
+                You'll be automatically eligible again on {nextDonationDate && format(nextDonationDate, 'MMMM dd, yyyy')}.<br />
+                <span className="font-semibold">{daysLeft} days left</span>
               </p>
+              {/* Progress bar visual */}
+              {user?.lastDonationDate && nextDonationDate && (
+                <div className="mt-2">
+                  <ProgressBar 
+                    value={100 - (daysLeft / 90) * 100} 
+                    max={100} 
+                    label={`${90 - daysLeft} of 90 days`} 
+                  />
+                </div>
+              )}
             </div>
           </div>
         </Card>
       )}
+      {/* Timeline Section */}
+      <div className="lg:col-span-1 space-y-6">
+        <Card>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Donation History Timeline</h2>
+          <div className="space-y-4">
+            {timelineEvents.length > 0 ? (
+              timelineEvents.map(event => (
+                <div key={event.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div>
+                    {event.type === 'Opt-in' && <CheckCircle className="h-5 w-5 text-blue-500" />}
+                    {event.type === 'Certificate' && <Award className="h-5 w-5 text-green-600" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">{event.type}</div>
+                    <div className="text-sm text-gray-600">{event.details}</div>
+                    <div className="text-xs text-gray-400">{format(event.date, 'MMM dd, yyyy')}</div>
+                  </div>
+                  {event.type === 'Certificate' && event.certificate.status === 'generated' && (
+                    <Button size="sm" onClick={() => downloadCertificate(event.certificate.id)}>
+                      <Download className="h-4 w-4 mr-1" /> Download
+                    </Button>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-500">No donation history yet.</div>
+            )}
+          </div>
+        </Card>
+      </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Matching Blood Requests */}
@@ -184,6 +271,9 @@ export const StudentDashboard: React.FC = () => {
                           <Badge className={getUrgencyColor(request.urgency)}>
                             {request.urgency}
                           </Badge>
+                          {isAssignedDonor(request) && (
+                            <Badge variant="success">Assigned Donor</Badge>
+                          )}
                         </div>
                         
                         <div className="space-y-1 text-sm text-gray-600">
@@ -258,7 +348,11 @@ export const StudentDashboard: React.FC = () => {
                           {optIn.request.bloodGroup} • {optIn.request.hospitalName}
                         </p>
                       </div>
-                      <Badge variant="success">Opted In</Badge>
+                      {isAssignedDonor(optIn.request) ? (
+                        <Badge variant="success">Assigned Donor</Badge>
+                      ) : (
+                        <Badge variant="success">Opted In</Badge>
+                      )}
                     </div>
                     <Button
                       size="sm"

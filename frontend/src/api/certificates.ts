@@ -47,16 +47,32 @@ export const getCertificateById = async (certificateId: string): Promise<ApiResp
 
 // Download certificate PDF
 export const downloadCertificate = async (certificateId: string): Promise<Blob> => {
-  // Check if user is admin by looking at the current URL or user role
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const isAdmin = user.role === 'admin';
-  
+  // Determine user role from localStorage
+  let user: any = {};
+  try {
+    user = JSON.parse(localStorage.getItem('user') || '{}');
+  } catch (e) {
+    console.warn('Could not parse user from localStorage:', e);
+    user = {};
+  }
+  const isAdmin = user && user.role === 'admin';
+
+  // If user is a student, use /certificates/:id/download
+  // If admin, use /certificates/admin/:id/download
   const endpoint = isAdmin 
     ? `/certificates/admin/${certificateId}/download`
     : `/certificates/${certificateId}/download`;
-    
+
+  // Debug logging
+  console.log('[downloadCertificate] user:', user, 'isAdmin:', isAdmin, 'endpoint:', endpoint);
+
   const response = await api.get(endpoint, {
     responseType: 'blob',
   });
   return response.data;
+}; 
+
+// Delete certificate request
+export const deleteCertificate = async (certificateId: string): Promise<void> => {
+  await api.delete(`/certificates/${certificateId}`);
 }; 

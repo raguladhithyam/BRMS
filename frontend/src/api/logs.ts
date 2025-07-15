@@ -41,13 +41,13 @@ export const logsApi = {
     return response.data.data;
   },
 
-  exportLogs: async (filters?: LogFilters & { format?: 'json' | 'csv' }): Promise<Blob | any> => {
+  exportLogs: async (filters?: LogFilters & { format?: 'json' | 'csv' | 'xlsx' }): Promise<Blob | any> => {
     const response = await api.get('/logs/export', { 
       params: filters,
-      responseType: filters?.format === 'csv' ? 'blob' : 'json'
+      responseType: (filters?.format === 'csv' || filters?.format === 'xlsx') ? 'blob' : 'json'
     });
     
-    if (filters?.format === 'csv') {
+    if (filters?.format === 'csv' || filters?.format === 'xlsx') {
       return response.data;
     }
     
