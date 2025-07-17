@@ -5,9 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && npm run copy-fonts",
+    "build": "tsc && vite build",
     "lint": "eslint .",
-    "copy-fonts": "cp -r src/fonts dist/fonts",
     "preview": "vite preview",
     "backend:dev": "cd ../backend && npm run dev",
     "backend:install": "cd ../backend && npm install",
