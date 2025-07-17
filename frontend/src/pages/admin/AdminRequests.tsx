@@ -951,6 +951,55 @@ export const AdminRequests: React.FC = () => {
           </form>
         )}
       </Modal>
+
+      {/* Assigned Donor and Geotagged Image for Completed Requests */}
+      {selectedRequest && selectedRequest.status === 'completed' && (
+        <Modal
+          isOpen={showDetailsModal} // Reusing showDetailsModal for this specific section
+          onClose={() => setShowDetailsModal(false)}
+          title="Blood Request Details"
+          size="lg"
+        >
+          {selectedRequest && (
+            <div className="space-y-6">
+              {/* Donor Info */}
+              {selectedRequest.assignedDonor && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                    <Users className="h-5 w-5 mr-2 text-blue-600" />
+                    Donor Who Donated
+                  </h3>
+                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-blue-900">{selectedRequest.assignedDonor.name}</p>
+                        <p className="text-sm text-blue-700">{selectedRequest.assignedDonor.email}</p>
+                        <p className="text-sm text-blue-600">Blood Group: {selectedRequest.assignedDonor.bloodGroup}</p>
+                      </div>
+                      <Badge variant="primary" className="bg-blue-600 text-white">
+                        Donated
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Geotagged Image */}
+              {selectedRequest.geotagPhoto && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Donation Geotagged Photo</h3>
+                  <a href={`/api/uploads/${selectedRequest.geotagPhoto}`} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={`/api/uploads/${selectedRequest.geotagPhoto}`}
+                      alt="Donation Geotagged Proof"
+                      className="max-w-xs rounded border border-gray-300 shadow"
+                    />
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </Modal>
+      )}
     </div>
   );
 };

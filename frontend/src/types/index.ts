@@ -23,7 +23,7 @@ export interface BloodRequest {
   hospitalName: string;
   location: string;
   notes?: string;
-  status: 'pending' | 'approved' | 'rejected' | 'fulfilled';
+  status: 'pending' | 'approved' | 'rejected' | 'fulfilled' | 'completed';
   urgency: 'low' | 'medium' | 'high' | 'critical';
   assignedDonorId?: string;
   geotagPhoto?: string;
