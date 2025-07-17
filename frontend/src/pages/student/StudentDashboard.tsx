@@ -111,7 +111,7 @@ export const StudentDashboard: React.FC = () => {
       request: optIn.request,
       id: `optin-${optIn.id}`,
     }))),
-    ...((certificates || []).map(cert => ({
+    ...((certificates || []).filter(cert => cert.donorId === user?.id).map(cert => ({
       type: 'Certificate' as const,
       date: new Date(cert.donationDate),
       details: `Donation completed at ${cert.hospitalName}`,
@@ -256,61 +256,63 @@ export const StudentDashboard: React.FC = () => {
             
             <div className="space-y-4">
               {eligible && matchingRequests && matchingRequests.length > 0 ? (
-                matchingRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="font-medium text-gray-900">
-                            {request.requestorName}
-                          </h3>
-                          <Badge variant="primary">{request.bloodGroup}</Badge>
-                          <Badge className={getUrgencyColor(request.urgency)}>
-                            {request.urgency}
-                          </Badge>
-                          {isAssignedDonor(request) && (
-                            <Badge variant="success">Assigned Donor</Badge>
+                matchingRequests
+                  .filter(request => isAssignedDonor(request))
+                  .map((request) => (
+                    <div
+                      key={request.id}
+                      className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h3 className="font-medium text-gray-900">
+                              {request.requestorName}
+                            </h3>
+                            <Badge variant="primary">{request.bloodGroup}</Badge>
+                            <Badge className={getUrgencyColor(request.urgency)}>
+                              {request.urgency}
+                            </Badge>
+                            {isAssignedDonor(request) && (
+                              <Badge variant="success">Assigned Donor</Badge>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-1 text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              {request.hospitalName}, {request.location}
+                            </div>
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-1" />
+                              Required: {format(new Date(request.dateTime), 'MMM dd, yyyy HH:mm')}
+                            </div>
+                            <div className="flex items-center">
+                              <Heart className="h-4 w-4 mr-1" />
+                              {request.units} unit(s) needed
+                            </div>
+                          </div>
+                          
+                          {request.notes && (
+                            <p className="mt-2 text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                              {request.notes}
+                            </p>
                           )}
                         </div>
                         
-                        <div className="space-y-1 text-sm text-gray-600">
-                          <div className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {request.hospitalName}, {request.location}
-                          </div>
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-1" />
-                            Required: {format(new Date(request.dateTime), 'MMM dd, yyyy HH:mm')}
-                          </div>
-                          <div className="flex items-center">
-                            <Heart className="h-4 w-4 mr-1" />
-                            {request.units} unit(s) needed
-                          </div>
+                        <div className="ml-4">
+                          <Button
+                            size="sm"
+                            onClick={() => handleOptIn(request.id)}
+                            loading={isOptingIn}
+                            disabled={isOptedIn(request.id) || request.status !== 'approved'}
+                          >
+                            Opt In to Help
+                          </Button>
                         </div>
-                        
-                        {request.notes && (
-                          <p className="mt-2 text-sm text-gray-700 bg-gray-50 p-2 rounded">
-                            {request.notes}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="ml-4">
-                        <Button
-                          size="sm"
-                          onClick={() => handleOptIn(request.id)}
-                          loading={isOptingIn}
-                          disabled={isOptedIn(request.id) || request.status !== 'approved'}
-                        >
-                          Opt In to Help
-                        </Button>
                       </div>
                     </div>
-                  </div>
-                ))
+                  ))
               ) : (
                 <EmptyState
                   icon={<Heart className="h-12 w-12" />}
@@ -334,37 +336,48 @@ export const StudentDashboard: React.FC = () => {
             
             <div className="space-y-3">
               {optIns && optIns.length > 0 ? (
-                optIns.slice(0, 5).map((optIn) => (
-                  <div
-                    key={optIn.id}
-                    className="p-3 bg-green-50 rounded-lg"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <p className="font-medium text-green-900">
-                          {optIn.request.requestorName}
-                        </p>
-                        <p className="text-sm text-green-700">
-                          {optIn.request.bloodGroup} • {optIn.request.hospitalName}
-                        </p>
+                optIns.slice(0, 5).map((optIn) => {
+                  // Check if a certificate exists for this request
+                  const hasCertificate = certificates && certificates.some(
+                    (cert) => cert.requestId === optIn.request.id
+                  );
+                  // Only show the button if the user is the assigned donor
+                  const assigned = isAssignedDonor(optIn.request);
+                  return (
+                    <div
+                      key={optIn.id}
+                      className="p-3 bg-green-50 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <p className="font-medium text-green-900">
+                            {optIn.request.requestorName}
+                          </p>
+                          <p className="text-sm text-green-700">
+                            {optIn.request.bloodGroup} • {optIn.request.hospitalName}
+                          </p>
+                        </div>
+                        {assigned ? (
+                          <Badge variant="success">Assigned Donor</Badge>
+                        ) : (
+                          <Badge variant="success">Opted In</Badge>
+                        )}
                       </div>
-                      {isAssignedDonor(optIn.request) ? (
-                        <Badge variant="success">Assigned Donor</Badge>
-                      ) : (
-                        <Badge variant="success">Opted In</Badge>
+                      {/* Only show Donation Completed button if no certificate exists and user is assigned donor */}
+                      {assigned && !hasCertificate && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDonationCompleted(optIn.request.id)}
+                          className="w-full mt-2"
+                        >
+                          <Award className="h-4 w-4 mr-2" />
+                          Donation Completed
+                        </Button>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDonationCompleted(optIn.request.id)}
-                      className="w-full mt-2"
-                    >
-                      <Award className="h-4 w-4 mr-2" />
-                      Donation Completed
-                    </Button>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-center py-4 text-gray-500">
                   <CheckCircle className="h-8 w-8 mx-auto mb-2 text-gray-300" />

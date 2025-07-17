@@ -169,6 +169,31 @@ export const useAdminCertificates = () => {
     }
   };
 
+  const approveAndGenerateCertificate = async (certificateId: string) => {
+    setIsApproving(true);
+    try {
+      const response = await certificateApi.approveAndGenerateCertificate(certificateId);
+      // Update the certificate in both lists
+      setPendingCertificates(prev => 
+        prev.map(cert => 
+          cert.id === certificateId ? response.data.certificate : cert
+        )
+      );
+      setAllCertificates(prev => 
+        prev.map(cert => 
+          cert.id === certificateId ? response.data.certificate : cert
+        )
+      );
+      toast.success('Certificate approved, generated, and emailed successfully');
+      return response.data;
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to approve and generate certificate');
+      throw err;
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
   const deleteCertificate = async (certificateId: string) => {
     setIsDeleting(true);
     try {
@@ -211,13 +236,14 @@ export const useAdminCertificates = () => {
     allCertificates,
     isLoading,
     error,
-    fetchCertificates,
-    approveCertificate,
-    generateCertificate,
-    downloadCertificate,
     isApproving,
     isGenerating,
-    deleteCertificate, // <-- add
-    isDeleting // <-- add
+    isDeleting,
+    approveCertificate,
+    generateCertificate,
+    approveAndGenerateCertificate,
+    deleteCertificate,
+    downloadCertificate,
+    fetchCertificates,
   };
 }; 

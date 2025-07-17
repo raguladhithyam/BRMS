@@ -43,6 +43,7 @@ export const AdminCertificates: React.FC = () => {
     isLoading, 
     approveCertificate, 
     generateCertificate,
+    approveAndGenerateCertificate,
     downloadCertificate,
     isApproving,
     isGenerating,
@@ -85,6 +86,13 @@ export const AdminCertificates: React.FC = () => {
     }
   };
 
+  const handleApproveAndGenerate = async (certificateId: string) => {
+    try {
+      await approveAndGenerateCertificate(certificateId);
+    } catch (error) {
+      console.error('Approve and generate certificate error:', error);
+    }
+  };
 
 
   const handleDownload = async (certificateId: string) => {
@@ -277,27 +285,13 @@ export const AdminCertificates: React.FC = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleApprove(certificate.id)}
+                          onClick={() => handleApproveAndGenerate(certificate.id)}
                           loading={isApproving}
                           className="text-green-600 hover:text-green-700"
-                          title="Approve Certificate"
+                          title="Approve and Generate Certificate"
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
                           Approve
-                        </Button>
-                      )}
-                      
-                      {certificate.status === 'approved' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleGenerate(certificate.id)}
-                          loading={isGenerating}
-                          className="text-blue-600 hover:text-blue-700"
-                          title="Generate PDF"
-                        >
-                          <Award className="h-4 w-4 mr-1" />
-                          Generate
                         </Button>
                       )}
                       
@@ -462,26 +456,13 @@ export const AdminCertificates: React.FC = () => {
               {selectedCertificate.status === 'pending' && (
                 <Button
                   onClick={() => {
-                    handleApprove(selectedCertificate.id);
+                    handleApproveAndGenerate(selectedCertificate.id);
                     setShowDetailsModal(false);
                   }}
                   loading={isApproving}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Approve Certificate
-                </Button>
-              )}
-              
-              {selectedCertificate.status === 'approved' && (
-                <Button
-                  onClick={() => {
-                    handleGenerate(selectedCertificate.id);
-                    setShowDetailsModal(false);
-                  }}
-                  loading={isGenerating}
-                >
-                  <Award className="h-4 w-4 mr-2" />
-                  Generate PDF
                 </Button>
               )}
               

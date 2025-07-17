@@ -85,9 +85,10 @@ export const DonationCompletionModal: React.FC<DonationCompletionModalProps> = (
                   <p className="font-medium mb-1">How to get a geotagged photo:</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>Take a photo at the donation center/hospital</li>
-                    <li>Ensure location services are enabled on your device</li>
-                    <li>Upload the photo to a cloud service (Google Drive, Onedrive, etc.)</li>
-                    <li>Provide the public link with VIEW Access to the photo below</li>
+                    <li>Use GPS Map Camera app to get the geotagged photo</li>
+                    <li>Select the photo and click on the upload button</li>
+                    <li>After uploading, the photo will be previewed below</li>
+                    <li>Click on the complete donation button to submit the photo</li>
                   </ul>
                 </div>
               </div>
