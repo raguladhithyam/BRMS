@@ -1,67 +1,246 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Users, Clock, Shield, ArrowRight, Phone, Mail, MapPin } from 'lucide-react';
+import { Heart, Users, Clock, Shield, Phone, Mail, MapPin, CheckCircle, Zap, ArrowRight } from 'lucide-react';
 import { Button } from '../../components/shared/Button';
 import { Card } from '../../components/shared/Card';
+import { motion } from 'framer-motion';
 
 export const LandingPage: React.FC = () => {
+  const [stats, setStats] = useState({
+    donors: 0,
+    livesSaved: 0,
+    hospitals: 0,
+    responseTime: 0
+  });
+
+  // Animate stats on load
+  useEffect(() => {
+    const animateStats = () => {
+      setStats({
+        donors: 500,
+        livesSaved: 200,
+        hospitals: 50,
+        responseTime: 24
+      });
+    };
+    
+    const timer = setTimeout(animateStats, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="min-h-screen">
-      {/* Top Navigation Bar */}
-      <nav className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Enhanced Top Navigation */}
+      <motion.nav 
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className="bg-white/95 backdrop-blur-md shadow-xl sticky top-0 z-50 border-b border-gray-200/50 w-full"
+      >
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <Heart className="h-6 w-6 text-primary-600" />
-              <span className="font-bold text-lg text-primary-600">BloodConnect</span>
-            </div>
-            <div>
+            <motion.div 
+              className="flex items-center space-x-3"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="p-2 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 rounded-xl shadow-lg">
+                <Heart className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <span className="font-bold text-xl bg-gradient-to-r from-red-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
+                  BloodConnect
+                </span>
+                <p className="text-xs text-gray-500 -mt-1 font-medium">Life. Connected.</p>
+              </div>
+            </motion.div>
+            <div className="flex items-center space-x-6">
+              <Link to="/request-blood" className="text-gray-600 hover:text-red-600 transition-colors font-medium">
+                Request Blood
+              </Link>
+              <Link to="/register" className="text-gray-600 hover:text-red-600 transition-colors font-medium">
+                Become Donor
+              </Link>
               <Link to="/login">
-                <Button variant="outline" className="text-primary-600 border-primary-600 hover:bg-primary-50">
+                <Button className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                   Login
                 </Button>
               </Link>
             </div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
       
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white">
-        <div className="absolute inset-0 bg-black opacity-10"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center">
-            <div className="flex justify-center mb-6">
-              <Heart className="h-16 w-16 text-primary-200" />
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Save Lives Through
-              <span className="block text-primary-200">Blood Donation</span>
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto">
-              Connect with willing donors in your community. Submit blood requests instantly 
-              and get matched with eligible student donors through our secure platform.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/request-blood">
-                <Button size="lg" className="bg-white text-primary-600 hover:bg-primary-50">
-                  Request Blood Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button variant="outline" size="lg" className="bg-white text-primary-600 hover:bg-primary-50">
-                  Become a Donor
-                </Button>
-              </Link>
-            </div>
+      {/* Enhanced Hero Section */}
+      <section className="relative overflow-hidden w-full">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500 via-pink-500 to-purple-600"></div>
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+        
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <motion.div
+            className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              rotate: [0, 180, 360]
+            }}
+            transition={{ 
+              duration: 20,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+          <motion.div
+            className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"
+            animate={{ 
+              scale: [1.2, 1, 1.2],
+              rotate: [360, 180, 0]
+            }}
+            transition={{ 
+              duration: 25,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+          />
+        </div>
+        
+        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-24">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <motion.div 
+              className="text-white"
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <motion.div 
+                className="flex items-center mb-6"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm shadow-lg">
+                  <Heart className="h-8 w-8" />
+                </div>
+                <span className="ml-3 text-lg font-medium">Trusted by 500+ Donors</span>
+              </motion.div>
+              
+              <motion.h1 
+                className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+              >
+                Save Lives
+                <motion.span 
+                  className="block bg-gradient-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent"
+                  animate={{ 
+                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+                  }}
+                  transition={{ 
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                >
+                  Instantly
+                </motion.span>
+              </motion.h1>
+              
+              <motion.p 
+                className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+              >
+                Connect blood requestors with verified student donors through our AI-powered matching system. 
+                <span className="font-semibold text-yellow-300"> Average response time: 2 hours</span>
+              </motion.p>
+              
+              <motion.div 
+                className="flex flex-col sm:flex-row gap-4 mb-8"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 1.0 }}
+              >
+                <Link to="/request-blood">
+                  <Button size="lg" className="bg-white text-red-600 hover:bg-gray-50 text-lg px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 group">
+                    <Zap className="mr-2 h-6 w-6 group-hover:animate-pulse" />
+                    Request Blood Now
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button variant="outline" size="lg" className="bg-white/20 text-white border-white hover:bg-white/30 text-lg px-8 py-4 rounded-xl backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+                    <Users className="mr-2 h-6 w-6" />
+                    Become a Donor
+                  </Button>
+                </Link>
+              </motion.div>
+              
+              <motion.div 
+                className="flex items-center space-x-6 text-white/80"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 1.2 }}
+              >
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 mr-2 text-green-300" />
+                  <span>Verified Donors</span>
+                </div>
+                <div className="flex items-center">
+                  <Shield className="h-5 w-5 mr-2 text-blue-300" />
+                  <span>Secure Platform</span>
+                </div>
+                <div className="flex items-center">
+                  <Clock className="h-5 w-5 mr-2 text-yellow-300" />
+                  <span>24/7 Support</span>
+                </div>
+              </motion.div>
+            </motion.div>
+            
+            <motion.div 
+              className="relative"
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20 shadow-2xl">
+                <div className="text-center text-white">
+                  <motion.div 
+                    className="text-6xl font-bold mb-2"
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    {stats.livesSaved}+
+                  </motion.div>
+                  <div className="text-xl mb-6">Lives Saved</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <motion.div 
+                      className="bg-white/20 rounded-xl p-4 hover:bg-white/30 transition-colors"
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <div className="text-2xl font-bold">{stats.donors}+</div>
+                      <div className="text-sm">Active Donors</div>
+                    </motion.div>
+                    <motion.div 
+                      className="bg-white/20 rounded-xl p-4 hover:bg-white/30 transition-colors"
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      <div className="text-2xl font-bold">{stats.hospitals}+</div>
+                      <div className="text-sm">Partner Hospitals</div>
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-gray-50 w-full">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               How BloodConnect Works
@@ -137,8 +316,8 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Trust & Security */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 bg-gray-50 w-full">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Trusted & Secure Platform
