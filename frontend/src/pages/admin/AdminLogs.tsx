@@ -58,7 +58,7 @@ const AdminLogs: React.FC = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full">
         <Card>
           <div className="text-center py-8">
             <h2 className="text-xl font-semibold text-red-600 mb-2">Error Loading Logs</h2>
@@ -76,11 +76,13 @@ const AdminLogs: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">System Logs</h1>
-          <p className="text-gray-600 mt-1">Monitor user and system activities</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+            System Logs
+          </h1>
+          <p className="text-gray-600 text-lg">Monitor user and system activities</p>
         </div>
         <div className="flex gap-2">
           <Button

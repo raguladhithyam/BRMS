@@ -156,7 +156,7 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
   ];
 
   return (
-    <div className={cn("max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8", className)}>
+    <div className={cn("w-full", className)}>
       {/* Header with refresh button */}
       <motion.div 
         className="mb-8 flex justify-between items-center"
@@ -165,8 +165,10 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
         transition={{ duration: 0.5 }}
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+            Admin Dashboard
+          </h1>
+          <p className="text-gray-600 text-lg">
             Monitor blood requests, manage donors, and save lives through efficient coordination.
           </p>
         </div>
@@ -197,20 +199,20 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
               transition={{ duration: 0.6, delay: 0.1 + index * 0.1 }}
               whileHover={{ scale: 1.02, y: -2 }}
             >
-              <Card hover className="relative overflow-hidden group">
+              <Card hover className="relative overflow-hidden group border-2 border-gray-200/50 shadow-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className={cn("p-3 rounded-lg transition-colors", stat.color, "group-hover:scale-110")}>
-                      <Icon className="h-6 w-6" />
+                    <div className={cn("p-4 rounded-xl transition-all duration-300 shadow-md", stat.color, "group-hover:scale-110 group-hover:shadow-lg")}>
+                      <Icon className="h-6 w-6 text-white" />
                     </div>
                     <div className="ml-4 flex-1">
-                      <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                      <div className="flex items-center">
-                        <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                      <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">{stat.title}</p>
+                      <div className="flex items-baseline space-x-2 mt-1">
+                        <p className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">{stat.value}</p>
                         <span className={cn(
-                          "ml-2 text-xs font-medium flex items-center",
-                          stat.change === 'positive' ? 'text-green-600' : 
-                          stat.change === 'negative' ? 'text-red-600' : 'text-gray-600'
+                          "text-xs font-semibold flex items-center px-2 py-0.5 rounded-full",
+                          stat.change === 'positive' ? 'bg-green-100 text-green-700' : 
+                          stat.change === 'negative' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
                         )}>
                           <TrendingUp className="h-3 w-3 mr-1" />
                           {stat.trend}
@@ -220,7 +222,7 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
                   </div>
                 </div>
                 {/* Animated background */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               </Card>
             </motion.div>
           );
@@ -235,10 +237,12 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
         transition={{ duration: 0.6, delay: 0.3 }}
       >
         {/* Blood Group Distribution */}
-        <Card className="hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Blood Group Distribution</h2>
-            <BarChart3 className="h-5 w-5 text-gray-400" />
+        <Card className="hover:shadow-xl transition-all duration-300 border-2 border-gray-200/50">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200/50">
+            <h2 className="text-xl font-bold text-gray-900">Blood Group Distribution</h2>
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+            </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={bloodGroupData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
@@ -253,10 +257,12 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
         </Card>
 
         {/* Donation Summary */}
-        <Card className="hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Donation Summary</h2>
-            <PieChart className="h-5 w-5 text-gray-400" />
+        <Card className="hover:shadow-xl transition-all duration-300 border-2 border-gray-200/50">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200/50">
+            <h2 className="text-xl font-bold text-gray-900">Donation Summary</h2>
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <PieChart className="h-5 w-5 text-purple-600" />
+            </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <RechartsPieChart>
@@ -280,10 +286,12 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
         </Card>
 
         {/* Recent Activity */}
-        <Card className="hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Recent Activity</h2>
-            <Activity className="h-5 w-5 text-gray-400" />
+        <Card className="hover:shadow-xl transition-all duration-300 border-2 border-gray-200/50">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200/50">
+            <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Activity className="h-5 w-5 text-green-600" />
+            </div>
           </div>
           <div className="space-y-3">
             {recentActivity.map((activity, index) => (
@@ -319,10 +327,10 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <Card className="hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Recent Blood Requests</h2>
-              <Badge variant="info">{requests?.data?.length || 0} Pending</Badge>
+          <Card className="hover:shadow-xl transition-all duration-300 border-2 border-gray-200/50">
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200/50">
+              <h2 className="text-2xl font-bold text-gray-900">Recent Blood Requests</h2>
+              <Badge variant="info" size="md">{requests?.data?.length || 0} Pending</Badge>
             </div>
             
             <div className="space-y-4">
@@ -380,55 +388,63 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
           </Card>
 
           {/* Quick Actions */}
-          <Card className="mt-6 hover:shadow-lg transition-shadow">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <Card className="mt-6 hover:shadow-xl transition-all duration-300 border-2 border-gray-200/50">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200/50">Quick Actions</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <motion.button 
                 onClick={handleReviewRequests}
-                className="p-4 text-left bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors group"
-                whileHover={{ scale: 1.02 }}
+                className="p-5 text-left bg-gradient-to-br from-primary-50 to-primary-100/50 hover:from-primary-100 hover:to-primary-200 rounded-xl transition-all duration-200 group border-2 border-primary-200/50 hover:border-primary-300 shadow-sm hover:shadow-md"
+                whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-primary-600 group-hover:animate-pulse" />
-                  <span className="font-medium text-primary-700">Review Pending Requests</span>
+                  <div className="p-2 bg-primary-500 rounded-lg group-hover:scale-110 transition-transform">
+                    <FileText className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="font-semibold text-primary-700 text-base">Review Pending Requests</span>
                 </div>
               </motion.button>
               
               <motion.button 
                 onClick={handleManageDonors}
-                className="p-4 text-left bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group"
-                whileHover={{ scale: 1.02 }}
+                className="p-5 text-left bg-gradient-to-br from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200 rounded-xl transition-all duration-200 group border-2 border-blue-200/50 hover:border-blue-300 shadow-sm hover:shadow-md"
+                whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center space-x-3">
-                  <Users className="h-5 w-5 text-blue-600 group-hover:animate-pulse" />
-                  <span className="font-medium text-blue-700">Manage Donors</span>
+                  <div className="p-2 bg-blue-500 rounded-lg group-hover:scale-110 transition-transform">
+                    <Users className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="font-semibold text-blue-700 text-base">Manage Donors</span>
                 </div>
               </motion.button>
               
               <motion.button
                 onClick={handleDownloadReport}
-                className="p-4 text-left bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
-                whileHover={{ scale: 1.02 }}
+                className="p-5 text-left bg-gradient-to-br from-green-50 to-green-100/50 hover:from-green-100 hover:to-green-200 rounded-xl transition-all duration-200 group border-2 border-green-200/50 hover:border-green-300 shadow-sm hover:shadow-md"
+                whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center space-x-3">
-                  <Download className="h-5 w-5 text-green-600 group-hover:animate-pulse" />
-                  <span className="font-medium text-green-700">Download Report</span>
+                  <div className="p-2 bg-green-500 rounded-lg group-hover:scale-110 transition-transform">
+                    <Download className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="font-semibold text-green-700 text-base">Download Report</span>
                 </div>
               </motion.button>
 
               <motion.button
                 onClick={() => navigate('/admin/certificates')}
-                className="p-4 text-left bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors group"
-                whileHover={{ scale: 1.02 }}
+                className="p-5 text-left bg-gradient-to-br from-purple-50 to-purple-100/50 hover:from-purple-100 hover:to-purple-200 rounded-xl transition-all duration-200 group border-2 border-purple-200/50 hover:border-purple-300 shadow-sm hover:shadow-md"
+                whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center space-x-3">
-                  <Award className="h-5 w-5 text-purple-600 group-hover:animate-pulse" />
-                  <span className="font-medium text-purple-700">Manage Certificates</span>
+                  <div className="p-2 bg-purple-500 rounded-lg group-hover:scale-110 transition-transform">
+                    <Award className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="font-semibold text-purple-700 text-base">Manage Certificates</span>
                 </div>
               </motion.button>
             </div>
@@ -441,8 +457,8 @@ export const EnhancedAdminDashboard: React.FC<EnhancedAdminDashboardProps> = ({ 
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.5 }}
         >
-          <Card className="hover:shadow-lg transition-shadow">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Blood Group Availability</h2>
+          <Card className="hover:shadow-xl transition-all duration-300 border-2 border-gray-200/50">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200/50">Blood Group Availability</h2>
             
             <div className="space-y-4">
               {bloodGroupStats?.map((group, index) => (

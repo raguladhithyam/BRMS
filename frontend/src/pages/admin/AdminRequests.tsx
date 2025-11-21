@@ -12,8 +12,7 @@ import {
   Heart,
   Users,
   Trash2,
-  Camera,
-  Edit3
+  Camera
 } from 'lucide-react';
 import { Card } from '@/components/shared/Card';
 import { Button } from '@/components/shared/Button';
@@ -174,10 +173,6 @@ export const AdminRequests: React.FC = () => {
     }
   };
 
-  const handleEdit = (request: BloodRequest) => {
-    setEditForm({ ...request });
-    setShowEditModal(true);
-  };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setEditForm((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -214,17 +209,23 @@ export const AdminRequests: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Blood Requests Management</h1>
-        <p className="text-gray-600">
-          Review, approve, and manage blood donation requests from the community.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+              Blood Requests Management
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Review, approve, and manage blood donation requests from the community.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
+      <Card className="mb-6 border-2 border-gray-200/50 shadow-lg">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="lg:col-span-2">
             <div className="relative">
@@ -270,20 +271,12 @@ export const AdminRequests: React.FC = () => {
         </div>
       </Card>
 
-      {/* Debug info - Remove this in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mb-4 p-2 bg-yellow-100 text-yellow-800 text-sm rounded">
-          Debug: Total requests: {requests?.data?.length || 0}, 
-          Unique requests: {uniqueRequests.length}, 
-          Filtered requests: {filteredRequests.length}
-        </div>
-      )}
 
       {/* Requests List */}
-      <Card padding={false}>
+      <Card padding={false} className="border-2 border-gray-200/50 shadow-lg overflow-hidden">
         {/* Bulk action bar */}
         {pendingRequestIds.length > 0 && (
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50">
+          <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-200/50 bg-gradient-to-r from-primary-50 to-blue-50">
             <input
               type="checkbox"
               checked={allSelected}
@@ -305,8 +298,8 @@ export const AdminRequests: React.FC = () => {
         {/* Table */}
         {filteredRequests.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200/50">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50">
                 <tr>
                   <th className="px-2 py-3">
                     <input
@@ -333,9 +326,9 @@ export const AdminRequests: React.FC = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200/50">
                 {filteredRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50">
+                  <tr key={request.id} className="hover:bg-gradient-to-r hover:from-primary-50/50 hover:to-blue-50/50 transition-all duration-200">
                     <td className="px-2 py-4">
                       {request.status === 'pending' && (
                         <input

@@ -29,7 +29,7 @@ export const LandingPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Enhanced Top Navigation */}
       <motion.nav 
         initial={{ y: -100, opacity: 0 }}
@@ -37,7 +37,7 @@ export const LandingPage: React.FC = () => {
         transition={{ duration: 0.6 }}
         className="bg-white/95 backdrop-blur-md shadow-xl sticky top-0 z-50 border-b border-gray-200/50 w-full"
       >
-        <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <motion.div 
               className="flex items-center space-x-3"
@@ -105,7 +105,7 @@ export const LandingPage: React.FC = () => {
           />
         </div>
         
-        <div className="relative w-full px-4 sm:px-6 lg:px-8 py-24">
+        <div className="relative max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-24">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div 
               className="text-white"
@@ -240,7 +240,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Features Section */}
       <section className="py-20 bg-gray-50 w-full">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               How BloodConnect Works
@@ -317,7 +317,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Trust & Security */}
       <section className="py-20 bg-gray-50 w-full">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Trusted & Secure Platform

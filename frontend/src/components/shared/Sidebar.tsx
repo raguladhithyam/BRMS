@@ -46,8 +46,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
       <aside
         className={cn(
           'md:fixed md:top-0 md:left-0 md:h-screen md:w-64 md:z-40',
-          'fixed top-0 left-0 h-full w-64 flex flex-col transition-transform duration-200',
-          'md:shadow-lg md:border-r md:bg-white bg-white',
+          'fixed top-0 left-0 h-full w-64 flex flex-col transition-transform duration-300 ease-in-out',
+          'md:shadow-xl md:border-r md:bg-white/95 md:backdrop-blur-md bg-white',
           'md:translate-x-0 md:block',
           isOpen ? 'translate-x-0' : '-translate-x-full',
           'md:static md:translate-x-0'
@@ -55,21 +55,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
         style={{ maxWidth: '16rem' }}
       >
         {/* Mobile close button */}
-        <div className="flex items-center h-16 px-6 border-b border-gray-200 justify-between">
-          <Link to={user?.role === 'admin' ? '/admin' : '/student'} className="flex items-center space-x-2">
-            <Heart className="h-8 w-8 text-primary-600" />
-            <span className="font-bold text-xl text-gray-900">BloodConnect</span>
+        <div className="flex items-center h-16 px-6 border-b border-gray-200/50 justify-between bg-gradient-to-r from-primary-50 to-white">
+          <Link to={user?.role === 'admin' ? '/admin' : '/student'} className="flex items-center space-x-2 group">
+            <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg shadow-md group-hover:shadow-lg transition-shadow">
+              <Heart className="h-6 w-6 text-white" fill="currentColor" />
+            </div>
+            <div>
+              <span className="font-bold text-lg text-gray-900 block leading-tight">BloodConnect</span>
+              <span className="text-xs text-gray-500 font-medium">Life. Connected.</span>
+            </div>
           </Link>
           <button
-            className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full ml-2"
+            className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg ml-2 transition-colors"
             onClick={onClose}
             aria-label="Close sidebar"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
         {/* Navigation */}
-        <nav className="flex-1 py-6 px-2 space-y-2">
+        <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -78,15 +83,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center space-x-3 px-4 py-2 rounded-md text-base font-medium transition-colors",
+                  "flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative",
                   isActive
-                    ? "bg-primary-100 text-primary-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/20"
+                    : "text-gray-700 hover:text-primary-600 hover:bg-primary-50/50"
                 )}
                 onClick={onClose}
               >
-                <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
+                <Icon className={cn(
+                  "h-5 w-5 transition-transform group-hover:scale-110",
+                  isActive ? "text-white" : "text-gray-500 group-hover:text-primary-600"
+                )} />
+                <span className="flex-1">{item.label}</span>
+                {isActive && (
+                  <div className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full" />
+                )}
               </Link>
             );
           })}
